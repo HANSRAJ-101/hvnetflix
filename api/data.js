@@ -69,14 +69,14 @@ module.exports = [
         title: "Episode 1",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/en2l9r6",
-        duration: 1440
+        duration: 1320
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/taup63d",
-        duration: 1440
+        duration: 1320
       },
       {
         number: 3,
