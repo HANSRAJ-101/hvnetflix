@@ -127,19 +127,16 @@ module.exports = [
         number: 1,
         title: "Episode 1",
         type: "iframe",
-        // Derived from the watch-page slug https://rumble.com/v7bzixm-...html
-        // If this doesn't play, go to the video on rumble.com -> Share -> Embed
-        // and paste the exact URL from that embed code here instead.
         src: "https://rumble.com/embed/v79suxe/?pub=4pw4c8"
         duration: 1440,
         loadBufferSeconds: 8   // increase if needed for a slow-loading source
       },
       {
-        number: 2,
-        title: "Episode 2",
-        type: "iframe",
-        src: "https://desidubanime.p2pplay.pro/#kl5eju"
-        duration: 1440,
+       number: 1,
+       title: "Episode 1",
+       type: "iframe",
+       src: "...",
+       duration: 1440,
         loadBufferSeconds: 8   // increase if needed for a slow-loading source
       }
     ]
