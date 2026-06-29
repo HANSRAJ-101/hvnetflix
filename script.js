@@ -29,6 +29,8 @@ let currentEpisodeIndex = -1;
 // throttles setTimeout while the tab is backgrounded/minimized — which
 // is the most common reason a long single setTimeout silently "misses."
 let autoAdvanceDeadline = null;
+// The setInterval ID used to poll autoAdvanceDeadline every second.
+let autoAdvanceTimer = null;
 
 // ---------- helpers ----------
 function escapeHtml(str = "") {
