@@ -123,14 +123,12 @@ module.exports = [
         // If this doesn't play, go to the video on rumble.com -> Share -> Embed
         // and paste the exact URL from that embed code here instead.
         src: "https://rumble.com/embed/v79suxe/?pub=4pw4c8"
-        duration: 1440
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
         src: "https://desidubanime.p2pplay.pro/#kl5eju"
-        duration: 1440
       }
     ]
   }
