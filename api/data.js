@@ -69,42 +69,42 @@ module.exports = [
         title: "Episode 1",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/en2l9r6",
-        duration: 1440
+        duration: 1431
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/taup63d",
-        duration: 1440
+        duration: 1431
       },
       {
         number: 3,
         title: "Episode 3",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/jonuq1e",
-        duration: 1440
+        duration: 1431
       },
       {
         number: 4,
         title: "Episode 4",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/vru4xh8",
-        duration: 1440
+        duration: 1431
       },
       {
         number: 5,
         title: "Episode 5",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/vi3jlvm",
-        duration: 1440
+        duration: 1431
       },
       {
         number: 6,
         title: "Episode 6",
         type: "iframe",
         src: "https://gdmirrorbot.nl/embed/zag1uao",
-        duration: 1440
+        duration: 1431
       }
     ]
   },
