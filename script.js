@@ -114,6 +114,7 @@ function renderDrawer(anime) {
   drawerTags.innerHTML = (anime.tags || []).map(t => `<span>${escapeHtml(t)}</span>`).join("");
 
   playerMount.innerHTML = `<p class="player-placeholder mono">SELECT AN EPISODE →</p>`;
+  removeDynamicPlayerControls();
 
   episodeList.innerHTML = "";
   anime.episodes.forEach((ep, index) => {
@@ -191,13 +192,69 @@ function loadPlayer(episode) {
     video.controls = true;
     video.playsInline = true;
     video.autoplay = true;
-    // Native videos tell us exactly when they finish, so we can
-    // genuinely auto-advance here.
+    // Native <video> gives full, accurate access to playback state —
+    // unlike iframes, there's no cross-origin barrier here. We use that
+    // for a real live-synced progress readout, and for exact auto-advance
+    // on "ended" (no timer, no guessing, no buffer needed).
     video.addEventListener("ended", playNextEpisode);
     playerMount.appendChild(video);
+
+    renderLiveProgressBar(video);
   }
 
   renderNextEpisodeControl(episode);
+}
+
+// A real progress readout for mp4 episodes, synced directly to the
+// video element's own playback clock — accurate to the second, because
+// native <video> exposes its true current time and duration (no cross-
+// origin restriction the way an iframe has).
+function renderLiveProgressBar(video) {
+  const existing = document.getElementById("liveProgressBar");
+  if (existing) existing.remove();
+
+  const wrap = document.createElement("div");
+  wrap.id = "liveProgressBar";
+  wrap.className = "live-progress";
+  wrap.innerHTML = `
+    <div class="live-progress-track">
+      <div class="live-progress-fill"></div>
+    </div>
+    <div class="live-progress-time mono">00:00 / 00:00</div>
+  `;
+  playerMount.insertAdjacentElement("afterend", wrap);
+
+  const fill = wrap.querySelector(".live-progress-fill");
+  const timeLabel = wrap.querySelector(".live-progress-time");
+  const track = wrap.querySelector(".live-progress-track");
+
+  function formatTime(seconds) {
+    if (!isFinite(seconds) || seconds < 0) seconds = 0;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${pad(m)}:${pad(s)}`;
+  }
+
+  function update() {
+    const duration = video.duration || 0;
+    const current = video.currentTime || 0;
+    const pct = duration > 0 ? (current / duration) * 100 : 0;
+    fill.style.width = `${pct}%`;
+    timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+  }
+
+  video.addEventListener("loadedmetadata", update);
+  video.addEventListener("timeupdate", update);
+
+  // Let viewers click/drag the bar to scrub, same as a real player.
+  function seekFromEvent(e) {
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    if (video.duration) video.currentTime = ratio * video.duration;
+  }
+  track.addEventListener("click", seekFromEvent);
+
+  update();
 }
 
 // Rumble's own player shows an "Up Next" overlay and can autoplay an
@@ -332,11 +389,21 @@ function hideDrawer() {
     overlay.classList.add("hidden");
     drawer.classList.add("hidden");
     playerMount.innerHTML = `<p class="player-placeholder mono">SELECT AN EPISODE →</p>`;
-    const existing = document.getElementById("nextEpisodeControl");
-    if (existing) existing.remove();
+    removeDynamicPlayerControls();
     currentAnime = null;
     currentEpisodeIndex = -1;
   }, 250);
+}
+
+// Removes the "Next Episode" button and the live mp4 progress bar —
+// both are injected as siblings right after playerMount, and both get
+// rebuilt fresh by loadPlayer() on the next episode. Called whenever the
+// player area is reset to its placeholder state.
+function removeDynamicPlayerControls() {
+  const nextControl = document.getElementById("nextEpisodeControl");
+  if (nextControl) nextControl.remove();
+  const progressBar = document.getElementById("liveProgressBar");
+  if (progressBar) progressBar.remove();
 }
 
 closeDrawer.addEventListener("click", hideDrawer);
