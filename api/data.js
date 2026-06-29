@@ -5,10 +5,19 @@
 // to add your real anime + episodes. No build step needed —
 // just commit and push, Vercel redeploys automatically.
 //
-// Each episode needs a `type` + `src`:
+// Each episode needs a `type` + `src`, and SHOULD have `duration`:
 //   type: "iframe"  -> src is an embeddable player URL
 //                       e.g. a Rumble embed: https://rumble.com/embed/XXXXXXX/
 //   type: "mp4"     -> src is a direct link to a .mp4 / .m3u8 file
+//   duration         -> episode length IN SECONDS (e.g. 24 min = 1440).
+//                        Only used for "iframe" episodes — it powers
+//                        auto-advance to the next episode, since the
+//                        front end can't detect when a cross-origin
+//                        iframe (Rumble, etc.) actually finishes playing.
+//                        "mp4" episodes auto-advance natively and don't
+//                        need this. If you skip `duration` on an iframe
+//                        episode, auto-advance is simply skipped for it —
+//                        the viewer still gets a manual "Next" button.
 // ============================================================
 
 module.exports = [
@@ -59,37 +68,43 @@ module.exports = [
         number: 1,
         title: "Episode 1",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/en2l9r6"
+        src: "https://gdmirrorbot.nl/embed/en2l9r6",
+        duration: 1440
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/taup63d"
+        src: "https://gdmirrorbot.nl/embed/taup63d",
+        duration: 1440
       },
       {
         number: 3,
         title: "Episode 3",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/jonuq1e"
+        src: "https://gdmirrorbot.nl/embed/jonuq1e",
+        duration: 1440
       },
       {
         number: 4,
         title: "Episode 4",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/vru4xh8"
+        src: "https://gdmirrorbot.nl/embed/vru4xh8",
+        duration: 1440
       },
       {
         number: 5,
         title: "Episode 5",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/vi3jlvm"
+        src: "https://gdmirrorbot.nl/embed/vi3jlvm",
+        duration: 1440
       },
       {
         number: 6,
         title: "Episode 6",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/zag1uao"
+        src: "https://gdmirrorbot.nl/embed/zag1uao",
+        duration: 1440
       }
     ]
   },
@@ -108,12 +123,14 @@ module.exports = [
         // If this doesn't play, go to the video on rumble.com -> Share -> Embed
         // and paste the exact URL from that embed code here instead.
         src: "https://rumble.com/embed/v79suxe/?pub=4pw4c8"
+        duration: 1440
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
         src: "https://desidubanime.p2pplay.pro/#kl5eju"
+        duration: 1440
       }
     ]
   }

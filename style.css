@@ -264,8 +264,15 @@ main { padding: 0 5vw 60px; }
 
 .next-episode-control {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   padding: 10px 22px 0;
+}
+
+.next-episode-hint {
+  font-size: 10px;
+  color: var(--muted);
 }
 
 .next-episode-btn {

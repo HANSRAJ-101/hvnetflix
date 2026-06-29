@@ -38,11 +38,18 @@ Open `api/data.js`. Each anime looks like this:
       number: 1,
       title: "Episode 1",
       type: "iframe",                                 // or "mp4"
-      src: "https://rumble.com/embed/VIDEO_ID/"        // the embed/video URL
+      src: "https://rumble.com/embed/VIDEO_ID/",       // the embed/video URL
+      duration: 1440                                   // episode length in SECONDS (optional, iframe only)
     }
   ]
 }
 ```
+
+**About `duration` and auto-advance to the next episode:**
+
+- `"mp4"` episodes auto-advance to the next episode automatically — the browser's native video player tells the page exactly when it ends. No `duration` needed.
+- `"iframe"` episodes (Rumble, etc.) are embedded from another website, so the page has **no way to detect** when they actually finish playing. To still auto-advance, give the episode a `duration` (its length in seconds — e.g. a 24-minute episode is `1440`), and a timer will move to the next episode once that time elapses.
+- If you leave `duration` off an iframe episode, auto-advance just doesn't happen for it — the viewer still sees a manual **"Next: Episode X →"** button under the player, so they're never stuck.
 
 **Two ways to point at a video, depending on your source:**
 

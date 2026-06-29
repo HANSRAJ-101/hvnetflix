@@ -24,6 +24,11 @@ let debounceTimer = null;
 let currentAnime = null;
 let currentEpisodeIndex = -1;
 
+// Timer used to auto-advance iframe episodes (Rumble, etc.) once their
+// known runtime has elapsed, since the page can't detect "ended" across
+// a cross-origin iframe the way it can for native <video>.
+let autoAdvanceTimer = null;
+
 // ---------- helpers ----------
 function escapeHtml(str = "") {
   return str
@@ -97,6 +102,7 @@ async function openAnime(id) {
 }
 
 function renderDrawer(anime) {
+  clearAutoAdvanceTimer();
   currentAnime = anime;
   currentEpisodeIndex = -1;
 
@@ -154,6 +160,9 @@ function playNextEpisode() {
 }
 
 function loadPlayer(episode) {
+  // Always clear any timer from the previous episode first, so switching
+  // episodes manually never leaves a stale auto-advance pending.
+  clearAutoAdvanceTimer();
   playerMount.innerHTML = "";
 
   if (episode.type === "iframe") {
@@ -163,6 +172,12 @@ function loadPlayer(episode) {
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = "no-referrer-when-downgrade";
     playerMount.appendChild(iframe);
+
+    // We can't see inside a cross-origin iframe to know when it ends,
+    // but if this episode has a known runtime we can fake it with a timer.
+    if (episode.duration && episode.duration > 0) {
+      autoAdvanceTimer = setTimeout(playNextEpisode, episode.duration * 1000);
+    }
   } else {
     const video = document.createElement("video");
     video.src = episode.src;
@@ -175,15 +190,22 @@ function loadPlayer(episode) {
     playerMount.appendChild(video);
   }
 
-  renderNextEpisodeControl();
+  renderNextEpisodeControl(episode);
+}
+
+function clearAutoAdvanceTimer() {
+  if (autoAdvanceTimer) {
+    clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
 }
 
 // Embedded (iframe) players live on another domain, so the page has no
-// way to detect when they actually finish playing. Rather than fake an
-// "autoplay" that can't really know, we surface a one-click Next button
-// under the player so moving on is still effortless. It also appears
-// for mp4s as a manual fallback alongside the automatic advance.
-function renderNextEpisodeControl() {
+// way to detect when they actually finish playing. If the episode has a
+// known `duration`, loadPlayer() already started a timer to auto-advance.
+// Either way, we surface a one-click Next button so moving on is always
+// effortless — and label it to reflect whether auto-advance is active.
+function renderNextEpisodeControl(currentEpisode) {
   const existing = document.getElementById("nextEpisodeControl");
   if (existing) existing.remove();
 
@@ -192,10 +214,15 @@ function renderNextEpisodeControl() {
   if (!hasNext) return;
 
   const nextEp = currentAnime.episodes[currentEpisodeIndex + 1];
+  const isAutoTimed = currentEpisode.type === "iframe" && currentEpisode.duration > 0;
+  const isNativeAuto = currentEpisode.type !== "iframe";
+
   const wrap = document.createElement("div");
   wrap.id = "nextEpisodeControl";
   wrap.className = "next-episode-control";
   wrap.innerHTML = `
+    ${isAutoTimed ? `<span class="next-episode-hint mono">AUTO-ADVANCING…</span>` : ""}
+    ${!isAutoTimed && !isNativeAuto ? `<span class="next-episode-hint mono">NO TIMER SET</span>` : ""}
     <button id="nextEpisodeBtn" class="next-episode-btn mono">
       NEXT: ${escapeHtml(nextEp.title)} →
     </button>
@@ -218,6 +245,7 @@ function hideDrawer() {
   overlay.classList.remove("visible");
   drawer.classList.remove("visible");
   drawer.setAttribute("aria-hidden", "true");
+  clearAutoAdvanceTimer();
   setTimeout(() => {
     overlay.classList.add("hidden");
     drawer.classList.add("hidden");
