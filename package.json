@@ -1,0 +1,9 @@
+{
+  "name": "anime-archive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple anime catalog site with a static front end and a Vercel serverless API backend.",
+  "engines": {
+    "node": ">=18"
+  }
+}

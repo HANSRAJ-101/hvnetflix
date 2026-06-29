@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anime Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-stamp">A</span>
+      <h1 class="brand-name">ANIME <span>ARCHIVE</span></h1>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input id="searchInput" type="text" placeholder="Search the catalog…" autocomplete="off" />
+    </div>
+  </header>
+
+  <main>
+    <section class="catalog-meta">
+      <span id="resultCount" class="mono">00 TITLES</span>
+      <span class="divider-line"></span>
+    </section>
+
+    <section id="grid" class="grid" aria-live="polite"></section>
+
+    <p id="emptyState" class="empty-state hidden">
+      No titles match that search. Try another keyword.
+    </p>
+  </main>
+
+  <!-- Slide-in drawer: episode list + player -->
+  <div id="overlay" class="overlay hidden"></div>
+  <aside id="drawer" class="drawer hidden" aria-hidden="true">
+    <button id="closeDrawer" class="close-btn" aria-label="Close">×</button>
+
+    <div class="player-shell">
+      <div id="playerMount" class="player-mount">
+        <p class="player-placeholder mono">SELECT AN EPISODE →</p>
+      </div>
+    </div>
+
+    <div class="drawer-info">
+      <h2 id="drawerTitle" class="drawer-title"></h2>
+      <p id="drawerSynopsis" class="drawer-synopsis"></p>
+      <div id="drawerTags" class="drawer-tags"></div>
+    </div>
+
+    <div class="episode-index">
+      <h3 class="mono index-label">EPISODES</h3>
+      <ol id="episodeList" class="episode-list"></ol>
+    </div>
+  </aside>
+
+  <footer class="site-footer">
+    <p class="mono">ANIME ARCHIVE — static front end + serverless API, deployed on Vercel.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
