@@ -24,10 +24,11 @@ let debounceTimer = null;
 let currentAnime = null;
 let currentEpisodeIndex = -1;
 
-// Timer used to auto-advance iframe episodes (Rumble, etc.) once their
-// known runtime has elapsed, since the page can't detect "ended" across
-// a cross-origin iframe the way it can for native <video>.
-let autoAdvanceTimer = null;
+// Tracks when the current iframe episode's timer should fire (wall-clock
+// timestamp in ms), so we can recover correctly even if the browser
+// throttles setTimeout while the tab is backgrounded/minimized — which
+// is the most common reason a long single setTimeout silently "misses."
+let autoAdvanceDeadline = null;
 
 // ---------- helpers ----------
 function escapeHtml(str = "") {
@@ -175,8 +176,12 @@ function loadPlayer(episode) {
 
     // We can't see inside a cross-origin iframe to know when it ends,
     // but if this episode has a known runtime we can fake it with a timer.
+    // A single long setTimeout can get throttled/dropped while the tab is
+    // backgrounded, so instead we record a wall-clock deadline and check
+    // it on a short interval (and again the instant the tab regains
+    // focus) — that way a backgrounded tab still catches up correctly.
     if (episode.duration && episode.duration > 0) {
-      autoAdvanceTimer = setTimeout(playNextEpisode, episode.duration * 1000);
+      startAutoAdvanceTimer(episode.duration);
     }
   } else {
     const video = document.createElement("video");
@@ -193,12 +198,52 @@ function loadPlayer(episode) {
   renderNextEpisodeControl(episode);
 }
 
-function clearAutoAdvanceTimer() {
-  if (autoAdvanceTimer) {
-    clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = null;
+function startAutoAdvanceTimer(durationSeconds) {
+  autoAdvanceDeadline = Date.now() + durationSeconds * 1000;
+  updateAutoAdvanceHint();
+  // Check every second. Cheap, and immune to a single dropped timeout.
+  autoAdvanceTimer = setInterval(() => {
+    checkAutoAdvanceDeadline();
+    updateAutoAdvanceHint();
+  }, 1000);
+}
+
+function checkAutoAdvanceDeadline() {
+  if (autoAdvanceDeadline && Date.now() >= autoAdvanceDeadline) {
+    clearAutoAdvanceTimer();
+    playNextEpisode();
   }
 }
+
+function clearAutoAdvanceTimer() {
+  if (autoAdvanceTimer) {
+    clearInterval(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
+  autoAdvanceDeadline = null;
+}
+
+// Updates the "AUTO-ADVANCING… 12:34" hint text in place, so the timer's
+// progress is visibly confirmed rather than a fire-and-forget guess.
+function updateAutoAdvanceHint() {
+  const hint = document.getElementById("nextEpisodeHint");
+  if (!hint || !autoAdvanceDeadline) return;
+  const remainingMs = autoAdvanceDeadline - Date.now();
+  const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+  const mins = Math.floor(remainingSec / 60);
+  const secs = remainingSec % 60;
+  hint.textContent = `AUTO-ADVANCING IN ${mins}:${String(secs).padStart(2, "0")}`;
+}
+
+// Background tabs can pause setInterval too, but browsers reliably fire
+// visibilitychange the moment a tab becomes visible again — so re-check
+// the deadline right then to catch up instantly instead of waiting for
+// the next (possibly delayed) interval tick.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    checkAutoAdvanceDeadline();
+  }
+});
 
 // Embedded (iframe) players live on another domain, so the page has no
 // way to detect when they actually finish playing. If the episode has a
@@ -221,7 +266,7 @@ function renderNextEpisodeControl(currentEpisode) {
   wrap.id = "nextEpisodeControl";
   wrap.className = "next-episode-control";
   wrap.innerHTML = `
-    ${isAutoTimed ? `<span class="next-episode-hint mono">AUTO-ADVANCING…</span>` : ""}
+    ${isAutoTimed ? `<span id="nextEpisodeHint" class="next-episode-hint mono">AUTO-ADVANCING…</span>` : ""}
     ${!isAutoTimed && !isNativeAuto ? `<span class="next-episode-hint mono">NO TIMER SET</span>` : ""}
     <button id="nextEpisodeBtn" class="next-episode-btn mono">
       NEXT: ${escapeHtml(nextEp.title)} →
@@ -229,6 +274,10 @@ function renderNextEpisodeControl(currentEpisode) {
   `;
   wrap.querySelector("#nextEpisodeBtn").addEventListener("click", playNextEpisode);
   playerMount.insertAdjacentElement("afterend", wrap);
+
+  // Render the timer state immediately so the countdown doesn't wait a
+  // full second to show its first value.
+  if (isAutoTimed) updateAutoAdvanceHint();
 }
 
 function showDrawer() {
