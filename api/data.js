@@ -18,6 +18,14 @@
 //                        need this. If you skip `duration` on an iframe
 //                        episode, auto-advance is simply skipped for it —
 //                        the viewer still gets a manual "Next" button.
+//   loadBufferSeconds -> OPTIONAL. Extra seconds added on top of
+//                        `duration` before auto-advancing, to account for
+//                        the embedded player's own loading/buffering time
+//                        (the timer starts the instant the iframe is
+//                        inserted, slightly before playback visually
+//                        begins). Defaults to 4 seconds if omitted —
+//                        increase it for a source that consistently loads
+//                        slower than that.
 // ============================================================
 
 module.exports = [
@@ -123,12 +131,16 @@ module.exports = [
         // If this doesn't play, go to the video on rumble.com -> Share -> Embed
         // and paste the exact URL from that embed code here instead.
         src: "https://rumble.com/embed/v79suxe/?pub=4pw4c8"
+        duration: 1440,
+        loadBufferSeconds: 8   // increase if needed for a slow-loading source
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
         src: "https://desidubanime.p2pplay.pro/#kl5eju"
+        duration: 1440,
+        loadBufferSeconds: 8   // increase if needed for a slow-loading source
       }
     ]
   }

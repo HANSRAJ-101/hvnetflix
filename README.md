@@ -50,6 +50,7 @@ Open `api/data.js`. Each anime looks like this:
 - `"mp4"` episodes auto-advance to the next episode automatically — the browser's native video player tells the page exactly when it ends. No `duration` needed.
 - `"iframe"` episodes (Rumble, etc.) are embedded from another website, so the page has **no way to detect** when they actually finish playing. To still auto-advance, give the episode a `duration` (its length in seconds — e.g. a 24-minute episode is `1440`), and a timer will move to the next episode once that time elapses.
 - If you leave `duration` off an iframe episode, auto-advance just doesn't happen for it — the viewer still sees a manual **"Next: Episode X →"** button under the player, so they're never stuck.
+- The timer actually waits `duration + 4 seconds` by default, since the iframe needs a moment to load before playback visually starts (the timer itself starts the instant the iframe is inserted, slightly before that). If a particular video source consistently loads slower than that, add `loadBufferSeconds: 8` (or whatever fits) to that episode in `data.js` to extend the buffer.
 
 **Two ways to point at a video, depending on your source:**
 

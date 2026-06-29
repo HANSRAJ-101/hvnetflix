@@ -170,7 +170,7 @@ function loadPlayer(episode) {
 
   if (episode.type === "iframe") {
     const iframe = document.createElement("iframe");
-    iframe.src = episode.src;
+    iframe.src = withPlayerEmbedParams(episode.src);
     iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = "no-referrer-when-downgrade";
@@ -183,7 +183,7 @@ function loadPlayer(episode) {
     // it on a short interval (and again the instant the tab regains
     // focus) — that way a backgrounded tab still catches up correctly.
     if (episode.duration && episode.duration > 0) {
-      startAutoAdvanceTimer(episode.duration);
+      startAutoAdvanceTimer(episode.duration, episode.loadBufferSeconds);
     }
   } else {
     const video = document.createElement("video");
@@ -200,8 +200,39 @@ function loadPlayer(episode) {
   renderNextEpisodeControl(episode);
 }
 
-function startAutoAdvanceTimer(durationSeconds) {
-  autoAdvanceDeadline = Date.now() + durationSeconds * 1000;
+// Rumble's own player shows an "Up Next" overlay and can autoplay an
+// unrelated suggested video right when an episode ends — that's Rumble's
+// behavior inside the iframe, not ours, and it would fight with our own
+// auto-advance timer. Rumble's docs support disabling this via URL params:
+// rel=0 turns off related-video suggestions, autoplay=0 keeps it from
+// starting another video on its own. We only touch rumble.com URLs and
+// only add params that aren't already present, so manual overrides in
+// data.js (if any) are respected.
+function withPlayerEmbedParams(src) {
+  try {
+    const url = new URL(src);
+    if (!url.hostname.includes("rumble.com")) return src;
+    if (!url.searchParams.has("rel")) url.searchParams.set("rel", "0");
+    if (!url.searchParams.has("autoplay")) url.searchParams.set("autoplay", "0");
+    return url.toString();
+  } catch {
+    // Malformed/relative URL — fall back to using it as-is.
+    return src;
+  }
+}
+
+// Small buffer (in seconds) added on top of an episode's duration before
+// auto-advancing. The deadline starts the instant the iframe is inserted,
+// but the embedded player needs a moment to load/buffer before playback
+// visually begins — without this buffer, a precise duration can cause the
+// timer to fire a few seconds before the video has actually reached its
+// true end. Adjust per-episode via `loadBufferSeconds` in data.js if a
+// particular source loads unusually slowly.
+const DEFAULT_LOAD_BUFFER_SECONDS = 4;
+
+function startAutoAdvanceTimer(durationSeconds, loadBufferSeconds) {
+  const buffer = typeof loadBufferSeconds === "number" ? loadBufferSeconds : DEFAULT_LOAD_BUFFER_SECONDS;
+  autoAdvanceDeadline = Date.now() + (durationSeconds + buffer) * 1000;
   updateAutoAdvanceHint();
   // Check every second. Cheap, and immune to a single dropped timeout.
   autoAdvanceTimer = setInterval(() => {
