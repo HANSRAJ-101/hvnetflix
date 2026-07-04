@@ -628,6 +628,36 @@ body.auth-body {
 }
 
 /* ============================================================
+   CATEGORIES ROW
+   ============================================================ */
+.category-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 26px 0 0;
+}
+
+.category-chip {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.category-chip:hover { border-color: var(--red-dim); color: var(--paper); }
+.category-chip.active {
+  border-color: var(--red);
+  color: var(--bg);
+  background: var(--red);
+  font-weight: 600;
+}
+
+/* ============================================================
    MY LIST TOGGLE + PLAYLIST BUTTON
    ============================================================ */
 .mylist-toggle {

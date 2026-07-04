@@ -11,6 +11,7 @@ const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
 const authArea = document.getElementById("authArea");
 const mylistToggle = document.getElementById("mylistToggle");
+const categoryRow = document.getElementById("categoryRow");
 const bannerEl = document.getElementById("banner");
 const continueRow = document.getElementById("continueRow");
 const continueList = document.getElementById("continueList");
@@ -27,6 +28,7 @@ const playlistBtn = document.getElementById("playlistBtn");
 
 let debounceTimer = null;
 let mylistActive = false;
+let activeCategory = null; // null = "ALL"
 let lastCatalog = []; // cache of the full (unfiltered-by-search) summary list
 
 // Tracks the anime + episode currently loaded in the drawer,
@@ -101,9 +103,10 @@ async function loadCatalog(query = "") {
       lastCatalog = data;
       initBanner(data);
       renderContinueWatching(data);
+      renderCategories(data);
     }
 
-    renderGrid(applyMylistFilter(data));
+    renderGrid(applyFilters(data));
   } catch (err) {
     grid.innerHTML = "";
     resultCount.textContent = "ERROR";
@@ -113,11 +116,41 @@ async function loadCatalog(query = "") {
   }
 }
 
-function applyMylistFilter(list) {
-  if (!mylistActive) return list;
-  const user = currentUser();
-  const playlist = AA.getPlaylist(user);
-  return list.filter((a) => playlist.includes(a.id));
+function applyFilters(list) {
+  let result = list;
+  if (mylistActive) {
+    const playlist = AA.getPlaylist(currentUser());
+    result = result.filter((a) => playlist.includes(a.id));
+  }
+  if (activeCategory) {
+    result = result.filter((a) => (a.tags || []).includes(activeCategory));
+  }
+  return result;
+}
+
+// ---------- categories ----------
+function renderCategories(list) {
+  const tagSet = new Set();
+  list.forEach((a) => (a.tags || []).forEach((t) => tagSet.add(t)));
+  const tags = [...tagSet].sort((a, b) => a.localeCompare(b));
+
+  categoryRow.innerHTML =
+    `<button class="category-chip${activeCategory === null ? " active" : ""}" data-tag="">ALL</button>` +
+    tags
+      .map(
+        (t) =>
+          `<button class="category-chip${activeCategory === t ? " active" : ""}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+      )
+      .join("");
+
+  categoryRow.querySelectorAll(".category-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      activeCategory = chip.dataset.tag || null;
+      categoryRow.querySelectorAll(".category-chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      renderGrid(applyFilters(lastCatalog));
+    });
+  });
 }
 
 function renderGrid(list) {
@@ -157,7 +190,7 @@ mylistToggle.addEventListener("click", () => {
   }
   mylistActive = !mylistActive;
   mylistToggle.classList.toggle("active", mylistActive);
-  renderGrid(applyMylistFilter(lastCatalog));
+  renderGrid(applyFilters(lastCatalog));
 });
 
 // ---------- top sliding banner ----------
@@ -346,7 +379,7 @@ function renderPlaylistButton(animeId) {
     const nowIn = AA.togglePlaylist(u, animeId);
     playlistBtn.textContent = nowIn ? "✓ IN MY LIST" : "+ MY LIST";
     playlistBtn.classList.toggle("active", nowIn);
-    if (mylistActive) renderGrid(applyMylistFilter(lastCatalog));
+    if (mylistActive || activeCategory) renderGrid(applyFilters(lastCatalog));
   };
 }
 
