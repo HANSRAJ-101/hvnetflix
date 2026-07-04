@@ -29,39 +29,33 @@
 // ============================================================
 
 module.exports = [
-  {
+   {
     id: 1,
-    title: "Sample Series One",
-    cover: "https://placehold.co/400x560/1a1a1d/e63946?text=Series+One",
-    synopsis: "Placeholder synopsis. Replace with your own series description.",
-    tags: ["Action", "Adventure"],
+    title: "David",
+    cover: "https://image.tmdb.org/t/p/original/bESlrLOrsQ9gKzaGQGHXKOyIUtX.jpg",
+    synopsis: " From the songs of his mother’s heart to the whispers of a faithful God, David’s story begins in quiet devotion. When the giant Goliath rises to terrorize a nation, a young shepherd armed with only a sling, a few stones, and unshakable faith steps forward. Pursued by power and driven by purpose, his journey tests the limits of loyalty, love, and courage—culminating in a battle not just for a crown, but for the soul of a kingdom.  ",
+    tags: ["Animation","Drama", "Family", "History",],
     episodes: [
       {
         number: 1,
-        title: "Episode 1",
+        title: " Movie",
         type: "iframe",
-        src: "https://rumble.com/embed/REPLACE_WITH_VIDEO_ID/"
-      },
-      {
-        number: 2,
-        title: "Episode 2",
-        type: "iframe",
-        src: "https://rumble.com/embed/REPLACE_WITH_VIDEO_ID/"
+        src: "https://gdmirrorbot.nl/embed/hhz2udb"
       }
     ]
   },
   {
     id: 2,
-    title: "Sample Series Two",
-    cover: "https://placehold.co/400x560/1a1a1d/e63946?text=Series+Two",
-    synopsis: "Placeholder synopsis. Replace with your own series description.",
-    tags: ["Drama", "Fantasy"],
+    title: "India’s Got Latent (Season 2) ",
+    cover: "https://image.tmdb.org/t/p/w500/eml0QA3zUMizBvrlfQKhWI0swVh.jpg",
+    synopsis: "Comedy  Reality. Replace with your own series description.",
+    tags: [" 4K | 1080p | 720p | 480p  ", "Hindi"],
     episodes: [
       {
         number: 1,
         title: "Episode 1",
-        type: "mp4",
-        src: "https://www.w3schools.com/html/mov_bbb.mp4"
+        type: "iframe",
+        src: "https://rumble.com/embed/v79ewfy/?pub=4pw4c8"
       }
     ]
   },
@@ -76,43 +70,37 @@ module.exports = [
         number: 1,
         title: "Episode 1",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/en2l9r6",
-        duration: 60
+        src: "https://gdmirrorbot.nl/embed/en2l9r6"
       },
       {
         number: 2,
         title: "Episode 2",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/taup63d",
-        duration: 60
+        src: "https://gdmirrorbot.nl/embed/taup63d"
       },
       {
         number: 3,
         title: "Episode 3",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/jonuq1e",
-        duration: 60
+        src: "https://gdmirrorbot.nl/embed/jonuq1e"
       },
       {
         number: 4,
         title: "Episode 4",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/vru4xh8",
-        duration: 60
+        src: "https://gdmirrorbot.nl/embed/vru4xh8"
       },
       {
         number: 5,
         title: "Episode 5",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/vi3jlvm",
-        duration: 60
+        src: "https://gdmirrorbot.nl/embed/vi3jlvm"
       },
       {
         number: 6,
         title: "Episode 6",
         type: "iframe",
-        src: "https://gdmirrorbot.nl/embed/zag1uao",
-        duration: 60
+        src: "https://gdmirrorbot.nl/embed/zag1uao"
       }
     ]
   },
