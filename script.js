@@ -77,7 +77,7 @@ function renderAuthArea() {
   const user = currentUser();
   if (user) {
     authArea.innerHTML = `
-      <span class="auth-user">${escapeHtml(user)}</span>
+      <a href="profile.html" class="auth-user-link">${escapeHtml(user)}</a>
       <button id="logoutBtn" class="auth-btn">LOG OUT</button>
     `;
     document.getElementById("logoutBtn").addEventListener("click", () => {
@@ -410,11 +410,22 @@ function persistEpisodeStart(episode) {
   if (!user || !currentAnime) return;
   const existing = AA.getProgress(user, currentAnime.id);
   const sameEpisode = existing && existing.episodeIndex === currentEpisodeIndex;
+  const time = sameEpisode ? existing.time : 0;
+  const duration = episode.duration || (sameEpisode ? existing.duration : 0);
   AA.saveProgress(user, currentAnime.id, {
     episodeIndex: currentEpisodeIndex,
     episodeNumber: episode.number,
-    time: sameEpisode ? existing.time : 0,
-    duration: episode.duration || (sameEpisode ? existing.duration : 0)
+    time,
+    duration
+  });
+  AA.recordHistory(user, {
+    animeId: currentAnime.id,
+    animeTitle: currentAnime.title,
+    animeCover: currentAnime.cover,
+    episodeIndex: currentEpisodeIndex,
+    episodeNumber: episode.number,
+    time,
+    duration
   });
 }
 
@@ -423,6 +434,15 @@ function saveWatchProgress(time, duration) {
   if (!user || !currentAnime || currentEpisodeIndex < 0) return;
   const episode = currentAnime.episodes[currentEpisodeIndex];
   AA.saveProgress(user, currentAnime.id, {
+    episodeIndex: currentEpisodeIndex,
+    episodeNumber: episode.number,
+    time,
+    duration
+  });
+  AA.recordHistory(user, {
+    animeId: currentAnime.id,
+    animeTitle: currentAnime.title,
+    animeCover: currentAnime.cover,
     episodeIndex: currentEpisodeIndex,
     episodeNumber: episode.number,
     time,
@@ -735,3 +755,11 @@ searchInput.addEventListener("input", (e) => {
 // ---------- init ----------
 renderAuthArea();
 loadCatalog();
+
+// Coming from profile.html's History/Watch List tabs — jump straight
+// into that title's drawer once the catalog has loaded.
+const deepLinkId = new URLSearchParams(window.location.search).get("open");
+if (deepLinkId) {
+  openAnime(Number(deepLinkId));
+  history.replaceState(null, "", window.location.pathname);
+}

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anime Archive — Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <section class="profile-hero">
+    <a href="index.html" class="profile-hero-back mono">← BACK TO CATALOG</a>
+    <img id="heroAvatar" class="profile-avatar-lg" src="" alt="Avatar" />
+    <h1 id="heroName" class="profile-name"></h1>
+    <div class="profile-stats mono">
+      <span>▶ <span id="statEpisodes">0</span> Episodes</span>
+      <span>⏱ <span id="statMinutes">0</span> Minutes</span>
+      <span>▷ <span id="statAnimes">0</span> Animes</span>
+    </div>
+    <div class="profile-tabs">
+      <button class="profile-tab active" data-panel="panelProfile">👤 Profile</button>
+      <button class="profile-tab" data-panel="panelHistory">↺ History</button>
+      <button class="profile-tab" data-panel="panelWatchlist">♥ Watch List</button>
+      <button class="profile-tab" data-panel="panelNotifications">🔔 Notification</button>
+    </div>
+  </section>
+
+  <div class="profile-body">
+
+    <section id="panelProfile" class="profile-panel active">
+      <div class="profile-grid">
+        <div class="profile-avatar-col">
+          <div class="profile-avatar-edit">
+            <img id="editAvatar" src="" alt="Avatar" />
+            <button id="avatarEditBtn" class="profile-avatar-edit-btn" title="Change avatar">✎</button>
+            <input id="avatarFileInput" type="file" accept="image/*" class="hidden" />
+          </div>
+          <div id="editAvatarName" class="profile-avatar-name"></div>
+          <div id="editAvatarSub" class="profile-avatar-sub"></div>
+        </div>
+
+        <form id="profileForm" class="profile-form">
+          <div class="profile-field">
+            <label class="mono">DISPLAY NAME</label>
+            <input id="displayNameInput" type="text" required />
+            <div class="profile-field-hint">The name displayed on your profile</div>
+          </div>
+
+          <div class="profile-field">
+            <label class="mono">EMAIL</label>
+            <input id="emailInput" type="email" />
+            <div class="profile-field-hint">Stored locally — used for nothing outside this browser</div>
+          </div>
+
+          <div class="profile-field">
+            <label class="mono">JOIN DATE</label>
+            <input id="joinDateInput" type="text" disabled />
+            <div class="profile-field-hint">Join date cannot be changed</div>
+          </div>
+
+          <div class="profile-divider"></div>
+
+          <button type="button" id="changePasswordBtn" class="profile-link-btn mono">⟳ Change Password</button>
+
+          <button type="submit" class="profile-save-btn">Save</button>
+          <p id="savedNote" class="profile-saved-note hidden">Saved.</p>
+        </form>
+      </div>
+    </section>
+
+    <section id="panelHistory" class="profile-panel">
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <section id="panelWatchlist" class="profile-panel">
+      <div id="watchlistGrid" class="watchlist-grid"></div>
+    </section>
+
+    <section id="panelNotifications" class="profile-panel">
+      <p class="profile-empty">You're all caught up. Nothing waiting on you here.</p>
+    </section>
+
+  </div>
+
+  <div id="passwordModalBackdrop" class="password-modal-backdrop hidden">
+    <div class="password-modal">
+      <h3>Change Password</h3>
+      <input id="oldPasswordInput" type="password" placeholder="Current password" />
+      <input id="newPasswordInput" type="password" placeholder="New password" />
+      <input id="confirmPasswordInput" type="password" placeholder="Confirm new password" />
+      <p id="passwordModalError" class="auth-error mono hidden"></p>
+      <div class="password-modal-actions">
+        <button class="cancel" id="passwordCancelBtn">Cancel</button>
+        <button class="confirm" id="passwordConfirmBtn">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    if (!AA.requireAuth()) {
+      // requireAuth already redirected to login.html
+      throw new Error("redirecting");
+    }
+
+    const username = AA.getCurrentUser();
+    const DEFAULT_AVATAR = "https://placehold.co/200x200/1d1d21/e63946?text=" + encodeURIComponent(username[0].toUpperCase());
+
+    function avatarSrc(profile) {
+      return profile.avatar || DEFAULT_AVATAR;
+    }
+
+    function formatJoinDate(ts) {
+      if (!ts) return "—";
+      const d = new Date(ts);
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function monthYear(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return `${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function renderHero() {
+      const profile = AA.getProfile(username);
+      const stats = AA.getStats(username);
+      document.getElementById("heroAvatar").src = avatarSrc(profile);
+      document.getElementById("heroName").textContent = profile.displayName.toUpperCase();
+      document.getElementById("statEpisodes").textContent = stats.episodes;
+      document.getElementById("statMinutes").textContent = stats.minutes.toLocaleString();
+      document.getElementById("statAnimes").textContent = stats.animes;
+
+      document.getElementById("editAvatar").src = avatarSrc(profile);
+      document.getElementById("editAvatarName").textContent = profile.displayName;
+      document.getElementById("editAvatarSub").textContent = `Member since ${monthYear(profile.createdAt)}`;
+
+      document.getElementById("displayNameInput").value = profile.displayName;
+      document.getElementById("emailInput").value = profile.email;
+      document.getElementById("joinDateInput").value = formatJoinDate(profile.createdAt);
+    }
+    renderHero();
+
+    // ---------- tabs ----------
+    document.querySelectorAll(".profile-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".profile-tab").forEach((t) => t.classList.remove("active"));
+        document.querySelectorAll(".profile-panel").forEach((p) => p.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.panel).classList.add("active");
+      });
+    });
+
+    // ---------- avatar upload ----------
+    const avatarFileInput = document.getElementById("avatarFileInput");
+    document.getElementById("avatarEditBtn").addEventListener("click", () => avatarFileInput.click());
+    avatarFileInput.addEventListener("change", () => {
+      const file = avatarFileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        AA.updateProfile(username, { avatar: reader.result });
+        renderHero();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ---------- profile form ----------
+    document.getElementById("profileForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      AA.updateProfile(username, {
+        displayName: document.getElementById("displayNameInput").value.trim() || username,
+        email: document.getElementById("emailInput").value.trim()
+      });
+      renderHero();
+      const note = document.getElementById("savedNote");
+      note.classList.remove("hidden");
+      setTimeout(() => note.classList.add("hidden"), 1800);
+    });
+
+    // ---------- change password modal ----------
+    const modalBackdrop = document.getElementById("passwordModalBackdrop");
+    document.getElementById("changePasswordBtn").addEventListener("click", () => {
+      document.getElementById("oldPasswordInput").value = "";
+      document.getElementById("newPasswordInput").value = "";
+      document.getElementById("confirmPasswordInput").value = "";
+      document.getElementById("passwordModalError").classList.add("hidden");
+      modalBackdrop.classList.remove("hidden");
+    });
+    document.getElementById("passwordCancelBtn").addEventListener("click", () => {
+      modalBackdrop.classList.add("hidden");
+    });
+    document.getElementById("passwordConfirmBtn").addEventListener("click", () => {
+      const oldPass = document.getElementById("oldPasswordInput").value;
+      const newPass = document.getElementById("newPasswordInput").value;
+      const confirmPass = document.getElementById("confirmPasswordInput").value;
+      const errorEl = document.getElementById("passwordModalError");
+
+      if (newPass !== confirmPass) {
+        errorEl.textContent = "New passwords do not match.";
+        errorEl.classList.remove("hidden");
+        return;
+      }
+      const result = AA.changePassword(username, oldPass, newPass);
+      if (!result.ok) {
+        errorEl.textContent = result.error;
+        errorEl.classList.remove("hidden");
+        return;
+      }
+      modalBackdrop.classList.add("hidden");
+    });
+
+    // ---------- history tab ----------
+    function escapeHtml(str = "") {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function timeAgo(ts) {
+      const diff = Math.max(0, Date.now() - ts) / 1000;
+      if (diff < 60) return "just now";
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      return `${Math.floor(diff / 86400)}d ago`;
+    }
+
+    function renderHistory() {
+      const list = AA.getHistoryList(username);
+      const container = document.getElementById("historyList");
+      if (!list.length) {
+        container.innerHTML = `<p class="profile-empty">No watch history yet — go start something from the catalog.</p>`;
+        return;
+      }
+      container.innerHTML = list
+        .map((e) => {
+          const pct = e.duration ? Math.min(100, ((e.time || 0) / e.duration) * 100) : 0;
+          return `
+            <button class="history-item" data-id="${e.animeId}">
+              <img class="history-thumb" src="${escapeHtml(e.animeCover || "")}" alt="" />
+              <div class="history-info">
+                <div class="history-title">${escapeHtml(e.animeTitle || "Unknown title")}</div>
+                <div class="history-sub">EPISODE ${String(e.episodeNumber).padStart(2, "0")} · ${timeAgo(e.watchedAt)}</div>
+                <div class="history-track"><div class="history-fill" style="width:${pct}%"></div></div>
+              </div>
+            </button>
+          `;
+        })
+        .join("");
+      container.querySelectorAll(".history-item").forEach((el) => {
+        el.addEventListener("click", () => {
+          window.location.href = `index.html?open=${el.dataset.id}`;
+        });
+      });
+    }
+    renderHistory();
+
+    // ---------- watch list tab ----------
+    async function renderWatchlist() {
+      const ids = AA.getPlaylist(username);
+      const container = document.getElementById("watchlistGrid");
+      if (!ids.length) {
+        container.innerHTML = `<p class="profile-empty">Your list is empty. Add titles from their episode page.</p>`;
+        return;
+      }
+      try {
+        const res = await fetch("/api/anime");
+        const all = await res.json();
+        const items = all.filter((a) => ids.includes(a.id));
+        container.innerHTML = items
+          .map(
+            (a) => `
+            <button class="watchlist-card" data-id="${a.id}">
+              <img class="watchlist-cover" src="${escapeHtml(a.cover)}" alt="${escapeHtml(a.title)}" />
+              <div class="watchlist-title">${escapeHtml(a.title)}</div>
+            </button>
+          `
+          )
+          .join("");
+        container.querySelectorAll(".watchlist-card").forEach((el) => {
+          el.addEventListener("click", () => {
+            window.location.href = `index.html?open=${el.dataset.id}`;
+          });
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="profile-empty">Could not reach the backend.</p>`;
+      }
+    }
+    renderWatchlist();
+  </script>
+</body>
+</html>

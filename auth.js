@@ -50,7 +50,14 @@
       return { ok: false, error: "That username is already taken." };
     }
 
-    users.push({ username, passHash: hashPass(password), createdAt: Date.now() });
+    users.push({
+      username,
+      passHash: hashPass(password),
+      createdAt: Date.now(),
+      displayName: username,
+      email: "",
+      avatar: ""
+    });
     saveUsers(users);
     setSession(username);
     return { ok: true };
@@ -118,6 +125,89 @@
     return !wasIn;
   }
 
+  // ---------------- profile ----------------
+  function getProfile(username) {
+    const user = getUsers().find((u) => u.username === username);
+    if (!user) return null;
+    return {
+      username: user.username,
+      displayName: user.displayName || user.username,
+      email: user.email || "",
+      avatar: user.avatar || "",
+      createdAt: user.createdAt
+    };
+  }
+
+  function updateProfile(username, fields) {
+    const users = getUsers();
+    const idx = users.findIndex((u) => u.username === username);
+    if (idx === -1) return { ok: false, error: "User not found." };
+    users[idx] = { ...users[idx], ...fields };
+    saveUsers(users);
+    return { ok: true };
+  }
+
+  function changePassword(username, oldPassword, newPassword) {
+    const users = getUsers();
+    const idx = users.findIndex((u) => u.username === username);
+    if (idx === -1) return { ok: false, error: "User not found." };
+    if (users[idx].passHash !== hashPass(oldPassword)) {
+      return { ok: false, error: "Current password is incorrect." };
+    }
+    if (!newPassword || newPassword.length < 4) {
+      return { ok: false, error: "New password must be at least 4 characters." };
+    }
+    users[idx].passHash = hashPass(newPassword);
+    saveUsers(users);
+    return { ok: true };
+  }
+
+  // ---------------- watch history ----------------
+  // One entry per unique episode ever watched, keyed by "animeId_episodeIndex"
+  // so re-watching an episode updates it in place instead of duplicating.
+  function historyKey(username) {
+    return `aa_history_${username}`;
+  }
+
+  function getHistoryMap(username) {
+    if (!username) return {};
+    try {
+      return JSON.parse(localStorage.getItem(historyKey(username))) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function recordHistory(username, entry) {
+    if (!username) return;
+    const map = getHistoryMap(username);
+    const key = `${entry.animeId}_${entry.episodeIndex}`;
+    map[key] = { ...map[key], ...entry, watchedAt: Date.now() };
+    localStorage.setItem(historyKey(username), JSON.stringify(map));
+  }
+
+  function getHistoryList(username) {
+    const map = getHistoryMap(username);
+    return Object.values(map).sort((a, b) => b.watchedAt - a.watchedAt);
+  }
+
+  function clearHistory(username) {
+    if (!username) return;
+    localStorage.removeItem(historyKey(username));
+  }
+
+  // ---------------- stats (for the profile header) ----------------
+  function getStats(username) {
+    const list = getHistoryList(username);
+    const minutes = list.reduce((sum, e) => sum + (e.time || 0), 0) / 60;
+    const animeIds = new Set(list.map((e) => e.animeId));
+    return {
+      episodes: list.length,
+      minutes: Math.round(minutes),
+      animes: animeIds.size
+    };
+  }
+
   // ---------------- watch progress ----------------
   // Shape: { [animeId]: { episodeIndex, episodeNumber, time, duration, updatedAt } }
   function progressKey(username) {
@@ -158,6 +248,13 @@
     logoutUser,
     getCurrentUser,
     requireAuth,
+    getProfile,
+    updateProfile,
+    changePassword,
+    recordHistory,
+    getHistoryList,
+    clearHistory,
+    getStats,
     getPlaylist,
     isInPlaylist,
     togglePlaylist,
