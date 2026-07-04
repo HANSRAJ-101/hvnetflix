@@ -1,12 +1,19 @@
 // ============================================================
 // Anime Archive — front-end logic
 // Talks only to /api/anime (the backend). No video URLs live here.
+// Auth, playlists, and watch-progress are handled by auth.js (AA),
+// all persisted to localStorage.
 // ============================================================
 
 const grid = document.getElementById("grid");
 const resultCount = document.getElementById("resultCount");
 const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
+const authArea = document.getElementById("authArea");
+const mylistToggle = document.getElementById("mylistToggle");
+const bannerEl = document.getElementById("banner");
+const continueRow = document.getElementById("continueRow");
+const continueList = document.getElementById("continueList");
 
 const overlay = document.getElementById("overlay");
 const drawer = document.getElementById("drawer");
@@ -16,8 +23,11 @@ const drawerTitle = document.getElementById("drawerTitle");
 const drawerSynopsis = document.getElementById("drawerSynopsis");
 const drawerTags = document.getElementById("drawerTags");
 const episodeList = document.getElementById("episodeList");
+const playlistBtn = document.getElementById("playlistBtn");
 
 let debounceTimer = null;
+let mylistActive = false;
+let lastCatalog = []; // cache of the full (unfiltered-by-search) summary list
 
 // Tracks the anime + episode currently loaded in the drawer,
 // so we know what "next episode" means when one finishes.
@@ -32,6 +42,10 @@ let autoAdvanceDeadline = null;
 // The setInterval ID used to poll autoAdvanceDeadline every second.
 let autoAdvanceTimer = null;
 
+// Throttle marker for saving mp4 progress so we don't hammer
+// localStorage on every single timeupdate tick.
+let lastProgressSaveAt = 0;
+
 // ---------- helpers ----------
 function escapeHtml(str = "") {
   return str
@@ -45,6 +59,34 @@ function pad(n) {
   return String(n).padStart(2, "0");
 }
 
+function formatClock(seconds) {
+  if (!isFinite(seconds) || seconds < 0) seconds = 0;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${pad(m)}:${pad(s)}`;
+}
+
+function currentUser() {
+  return AA.getCurrentUser();
+}
+
+// ---------- auth header ----------
+function renderAuthArea() {
+  const user = currentUser();
+  if (user) {
+    authArea.innerHTML = `
+      <span class="auth-user">${escapeHtml(user)}</span>
+      <button id="logoutBtn" class="auth-btn">LOG OUT</button>
+    `;
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      AA.logoutUser();
+      window.location.reload();
+    });
+  } else {
+    authArea.innerHTML = `<a href="login.html" class="auth-btn">LOG IN / REGISTER</a>`;
+  }
+}
+
 // ---------- fetch + render catalog ----------
 async function loadCatalog(query = "") {
   const url = query
@@ -54,7 +96,14 @@ async function loadCatalog(query = "") {
   try {
     const res = await fetch(url);
     const data = await res.json();
-    renderGrid(data);
+
+    if (!query) {
+      lastCatalog = data;
+      initBanner(data);
+      renderContinueWatching(data);
+    }
+
+    renderGrid(applyMylistFilter(data));
   } catch (err) {
     grid.innerHTML = "";
     resultCount.textContent = "ERROR";
@@ -64,12 +113,22 @@ async function loadCatalog(query = "") {
   }
 }
 
+function applyMylistFilter(list) {
+  if (!mylistActive) return list;
+  const user = currentUser();
+  const playlist = AA.getPlaylist(user);
+  return list.filter((a) => playlist.includes(a.id));
+}
+
 function renderGrid(list) {
   grid.innerHTML = "";
   resultCount.textContent = `${pad(list.length)} TITLE${list.length === 1 ? "" : "S"}`;
 
   if (list.length === 0) {
     emptyState.classList.remove("hidden");
+    emptyState.textContent = mylistActive
+      ? "Your list is empty. Add titles from their episode page."
+      : "No titles match that search. Try another keyword.";
     return;
   }
   emptyState.classList.add("hidden");
@@ -88,6 +147,133 @@ function renderGrid(list) {
     `;
     card.addEventListener("click", () => openAnime(anime.id));
     grid.appendChild(card);
+  });
+}
+
+mylistToggle.addEventListener("click", () => {
+  if (!currentUser()) {
+    window.location.href = "login.html";
+    return;
+  }
+  mylistActive = !mylistActive;
+  mylistToggle.classList.toggle("active", mylistActive);
+  renderGrid(applyMylistFilter(lastCatalog));
+});
+
+// ---------- top sliding banner ----------
+let bannerSlides = [];
+let bannerIndex = 0;
+let bannerTimer = null;
+const BANNER_INTERVAL_MS = 2000;
+
+function initBanner(list) {
+  // Feature up to 5 titles — furthest along in the catalog order counts
+  // as "latest," most episodes counts as "popular."
+  const byLatest = [...list].slice(-5).reverse();
+  const byPopular = [...list].sort((a, b) => b.episodeCount - a.episodeCount);
+  const merged = [];
+  const seen = new Set();
+  [...byLatest, ...byPopular].forEach((a) => {
+    if (!seen.has(a.id) && merged.length < 5) {
+      seen.add(a.id);
+      merged.push(a);
+    }
+  });
+
+  bannerSlides = merged;
+  bannerIndex = 0;
+  renderBanner();
+  startBannerAutoplay();
+}
+
+function renderBanner() {
+  if (!bannerSlides.length) {
+    bannerEl.classList.add("hidden");
+    return;
+  }
+  bannerEl.classList.remove("hidden");
+
+  bannerEl.innerHTML = bannerSlides
+    .map(
+      (a, i) => `
+      <div class="banner-slide${i === bannerIndex ? " active" : ""}" style="background-image:url('${escapeHtml(a.cover)}')" data-id="${a.id}">
+        <div class="banner-copy">
+          <span class="banner-eyebrow mono">${i === 0 ? "LATEST" : "POPULAR"} · EP ${pad(a.episodeCount)}</span>
+          <div class="banner-title">${escapeHtml(a.title)}</div>
+          <p class="banner-synopsis">${escapeHtml(a.synopsis || "")}</p>
+        </div>
+      </div>`
+    )
+    .join("") +
+    `<div class="banner-dots">${bannerSlides
+      .map((_, i) => `<button class="banner-dot${i === bannerIndex ? " active" : ""}" data-index="${i}"></button>`)
+      .join("")}</div>`;
+
+  bannerEl.querySelectorAll(".banner-slide").forEach((el) => {
+    el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
+  });
+  bannerEl.querySelectorAll(".banner-dot").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      goToBannerSlide(Number(el.dataset.index));
+      startBannerAutoplay(); // reset the clock on manual interaction
+    });
+  });
+}
+
+function goToBannerSlide(index) {
+  bannerIndex = (index + bannerSlides.length) % bannerSlides.length;
+  renderBanner();
+}
+
+function startBannerAutoplay() {
+  clearInterval(bannerTimer);
+  if (bannerSlides.length <= 1) return;
+  bannerTimer = setInterval(() => {
+    goToBannerSlide(bannerIndex + 1);
+  }, BANNER_INTERVAL_MS);
+}
+
+// ---------- continue watching ----------
+function renderContinueWatching(list) {
+  const user = currentUser();
+  if (!user) {
+    continueRow.classList.add("hidden");
+    return;
+  }
+
+  const allProgress = AA.getAllProgress(user);
+  const entries = Object.entries(allProgress)
+    .map(([animeId, p]) => ({ animeId: Number(animeId), ...p }))
+    .filter((p) => list.some((a) => a.id === p.animeId))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 10);
+
+  if (!entries.length) {
+    continueRow.classList.add("hidden");
+    return;
+  }
+
+  continueRow.classList.remove("hidden");
+  continueList.innerHTML = entries
+    .map((p) => {
+      const anime = list.find((a) => a.id === p.animeId);
+      const pct = p.duration ? Math.min(100, (p.time / p.duration) * 100) : 0;
+      return `
+        <button class="continue-card" data-id="${anime.id}">
+          <img class="continue-cover" src="${escapeHtml(anime.cover)}" alt="${escapeHtml(anime.title)}" loading="lazy" />
+          <div class="continue-progress-track"><div class="continue-progress-fill" style="width:${pct}%"></div></div>
+          <div class="continue-body">
+            <div class="continue-title">${escapeHtml(anime.title)}</div>
+            <div class="continue-sub mono">EP ${pad((p.episodeNumber ?? p.episodeIndex + 1) || 1)} · ${formatClock(p.time || 0)}</div>
+          </div>
+        </button>
+      `;
+    })
+    .join("");
+
+  continueList.querySelectorAll(".continue-card").forEach((el) => {
+    el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
   });
 }
 
@@ -115,6 +301,7 @@ function renderDrawer(anime) {
 
   playerMount.innerHTML = `<p class="player-placeholder mono">SELECT AN EPISODE →</p>`;
   removeDynamicPlayerControls();
+  renderPlaylistButton(anime.id);
 
   episodeList.innerHTML = "";
   anime.episodes.forEach((ep, index) => {
@@ -130,10 +317,37 @@ function renderDrawer(anime) {
     episodeList.appendChild(li);
   });
 
-  // auto-load first episode
+  // Resume where the user left off, if we have a saved position for
+  // this anime; otherwise start from episode 1.
   if (anime.episodes.length) {
-    selectEpisode(0);
+    const user = currentUser();
+    const saved = user ? AA.getProgress(user, anime.id) : null;
+    const startIndex =
+      saved && saved.episodeIndex != null && anime.episodes[saved.episodeIndex]
+        ? saved.episodeIndex
+        : 0;
+    selectEpisode(startIndex);
   }
+}
+
+// ---------- playlist button ----------
+function renderPlaylistButton(animeId) {
+  const user = currentUser();
+  const inList = user ? AA.isInPlaylist(user, animeId) : false;
+  playlistBtn.textContent = inList ? "✓ IN MY LIST" : "+ MY LIST";
+  playlistBtn.classList.toggle("active", inList);
+
+  playlistBtn.onclick = () => {
+    const u = currentUser();
+    if (!u) {
+      window.location.href = "login.html";
+      return;
+    }
+    const nowIn = AA.togglePlaylist(u, animeId);
+    playlistBtn.textContent = nowIn ? "✓ IN MY LIST" : "+ MY LIST";
+    playlistBtn.classList.toggle("active", nowIn);
+    if (mylistActive) renderGrid(applyMylistFilter(lastCatalog));
+  };
 }
 
 // Activates the episode at `index`, updates the highlighted list item,
@@ -152,6 +366,35 @@ function selectEpisode(index) {
   }
 
   loadPlayer(currentAnime.episodes[index]);
+  persistEpisodeStart(currentAnime.episodes[index]);
+}
+
+// Records that this episode is now "the one being watched" the instant
+// it's selected, even before any time has accumulated — so Continue
+// Watching and resume-on-reopen work even if the user closes right away.
+function persistEpisodeStart(episode) {
+  const user = currentUser();
+  if (!user || !currentAnime) return;
+  const existing = AA.getProgress(user, currentAnime.id);
+  const sameEpisode = existing && existing.episodeIndex === currentEpisodeIndex;
+  AA.saveProgress(user, currentAnime.id, {
+    episodeIndex: currentEpisodeIndex,
+    episodeNumber: episode.number,
+    time: sameEpisode ? existing.time : 0,
+    duration: episode.duration || (sameEpisode ? existing.duration : 0)
+  });
+}
+
+function saveWatchProgress(time, duration) {
+  const user = currentUser();
+  if (!user || !currentAnime || currentEpisodeIndex < 0) return;
+  const episode = currentAnime.episodes[currentEpisodeIndex];
+  AA.saveProgress(user, currentAnime.id, {
+    episodeIndex: currentEpisodeIndex,
+    episodeNumber: episode.number,
+    time,
+    duration
+  });
 }
 
 // Advances to the next episode, if one exists.
@@ -194,11 +437,37 @@ function loadPlayer(episode) {
     video.autoplay = true;
     // Native <video> gives full, accurate access to playback state —
     // unlike iframes, there's no cross-origin barrier here. We use that
-    // for a real live-synced progress readout, and for exact auto-advance
-    // on "ended" (no timer, no guessing, no buffer needed).
-    video.addEventListener("ended", playNextEpisode);
-    playerMount.appendChild(video);
+    // for a real live-synced progress readout, exact auto-advance on
+    // "ended," and precise resume-from-last-position.
+    video.addEventListener("ended", () => {
+      saveWatchProgress(0, video.duration || 0);
+      playNextEpisode();
+    });
 
+    // Resume from a saved position, if we have one for this exact episode.
+    const user = currentUser();
+    const saved = user ? AA.getProgress(user, currentAnime.id) : null;
+    if (saved && saved.episodeIndex === currentEpisodeIndex && saved.time > 5) {
+      video.addEventListener(
+        "loadedmetadata",
+        () => {
+          if (saved.time < video.duration - 5) {
+            video.currentTime = saved.time;
+          }
+        },
+        { once: true }
+      );
+    }
+
+    video.addEventListener("timeupdate", () => {
+      const now = Date.now();
+      if (now - lastProgressSaveAt > 5000) {
+        lastProgressSaveAt = now;
+        saveWatchProgress(video.currentTime, video.duration || 0);
+      }
+    });
+
+    playerMount.appendChild(video);
     renderLiveProgressBar(video);
   }
 
@@ -228,19 +497,12 @@ function renderLiveProgressBar(video) {
   const timeLabel = wrap.querySelector(".live-progress-time");
   const track = wrap.querySelector(".live-progress-track");
 
-  function formatTime(seconds) {
-    if (!isFinite(seconds) || seconds < 0) seconds = 0;
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${pad(m)}:${pad(s)}`;
-  }
-
   function update() {
     const duration = video.duration || 0;
     const current = video.currentTime || 0;
     const pct = duration > 0 ? (current / duration) * 100 : 0;
     fill.style.width = `${pct}%`;
-    timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+    timeLabel.textContent = `${formatClock(current)} / ${formatClock(duration)}`;
   }
 
   video.addEventListener("loadedmetadata", update);
@@ -292,15 +554,32 @@ function startAutoAdvanceTimer(durationSeconds, loadBufferSeconds) {
   autoAdvanceDeadline = Date.now() + (durationSeconds + buffer) * 1000;
   updateAutoAdvanceHint();
   // Check every second. Cheap, and immune to a single dropped timeout.
+  // We also piggyback iframe watch-progress tracking on this same tick,
+  // since cross-origin iframes give us no native timeupdate event.
   autoAdvanceTimer = setInterval(() => {
     checkAutoAdvanceDeadline();
     updateAutoAdvanceHint();
+    saveIframeProgressTick(durationSeconds);
   }, 1000);
+}
+
+// Approximates elapsed playback time for an iframe episode from the
+// auto-advance countdown, and periodically persists it so "continue
+// watching" has something reasonable to show even for embedded sources.
+function saveIframeProgressTick(durationSeconds) {
+  if (!autoAdvanceDeadline) return;
+  const now = Date.now();
+  if (now - lastProgressSaveAt < 5000) return;
+  lastProgressSaveAt = now;
+  const remainingMs = Math.max(0, autoAdvanceDeadline - now);
+  const elapsed = Math.max(0, durationSeconds - remainingMs / 1000);
+  saveWatchProgress(elapsed, durationSeconds);
 }
 
 function checkAutoAdvanceDeadline() {
   if (autoAdvanceDeadline && Date.now() >= autoAdvanceDeadline) {
     clearAutoAdvanceTimer();
+    saveWatchProgress(0, 0);
     playNextEpisode();
   }
 }
@@ -392,6 +671,7 @@ function hideDrawer() {
     removeDynamicPlayerControls();
     currentAnime = null;
     currentEpisodeIndex = -1;
+    renderContinueWatching(lastCatalog); // reflect whatever was just watched
   }, 250);
 }
 
@@ -420,4 +700,5 @@ searchInput.addEventListener("input", (e) => {
 });
 
 // ---------- init ----------
+renderAuthArea();
 loadCatalog();

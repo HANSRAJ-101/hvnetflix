@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anime Archive — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="auth-body">
+
+  <div class="auth-card">
+    <div class="brand auth-brand">
+      <span class="brand-stamp">A</span>
+      <h1 class="brand-name">ANIME <span>ARCHIVE</span></h1>
+    </div>
+
+    <div class="auth-tabs">
+      <button id="tabLogin" class="auth-tab active">LOG IN</button>
+      <button id="tabRegister" class="auth-tab">REGISTER</button>
+    </div>
+
+    <form id="loginForm" class="auth-form">
+      <label class="auth-label mono">USERNAME</label>
+      <input id="loginUsername" type="text" autocomplete="username" required />
+      <label class="auth-label mono">PASSWORD</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" required />
+      <p id="loginError" class="auth-error mono hidden"></p>
+      <button type="submit" class="auth-submit">ENTER ARCHIVE →</button>
+    </form>
+
+    <form id="registerForm" class="auth-form hidden">
+      <label class="auth-label mono">USERNAME</label>
+      <input id="registerUsername" type="text" autocomplete="username" required />
+      <label class="auth-label mono">PASSWORD</label>
+      <input id="registerPassword" type="password" autocomplete="new-password" required />
+      <label class="auth-label mono">CONFIRM PASSWORD</label>
+      <input id="registerConfirm" type="password" autocomplete="new-password" required />
+      <p id="registerError" class="auth-error mono hidden"></p>
+      <button type="submit" class="auth-submit">CREATE ACCOUNT →</button>
+    </form>
+
+    <p class="auth-footnote mono">Accounts are stored locally in this browser.</p>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Already signed in? Skip straight to the catalog.
+    if (AA.getCurrentUser()) {
+      window.location.href = "index.html";
+    }
+
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+
+    function showLogin() {
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+      loginForm.classList.remove("hidden");
+      registerForm.classList.add("hidden");
+    }
+    function showRegister() {
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+      registerForm.classList.remove("hidden");
+      loginForm.classList.add("hidden");
+    }
+    tabLogin.addEventListener("click", showLogin);
+    tabRegister.addEventListener("click", showRegister);
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const username = document.getElementById("loginUsername").value;
+      const password = document.getElementById("loginPassword").value;
+      const errorEl = document.getElementById("loginError");
+      const result = AA.loginUser(username, password);
+      if (result.ok) {
+        window.location.href = "index.html";
+      } else {
+        errorEl.textContent = result.error;
+        errorEl.classList.remove("hidden");
+      }
+    });
+
+    registerForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const username = document.getElementById("registerUsername").value;
+      const password = document.getElementById("registerPassword").value;
+      const confirm = document.getElementById("registerConfirm").value;
+      const errorEl = document.getElementById("registerError");
+
+      if (password !== confirm) {
+        errorEl.textContent = "Passwords do not match.";
+        errorEl.classList.remove("hidden");
+        return;
+      }
+
+      const result = AA.registerUser(username, password);
+      if (result.ok) {
+        window.location.href = "index.html";
+      } else {
+        errorEl.textContent = result.error;
+        errorEl.classList.remove("hidden");
+      }
+    });
+  </script>
+</body>
+</html>

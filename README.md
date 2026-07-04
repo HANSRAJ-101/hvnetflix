@@ -116,3 +116,11 @@ The video itself is **never proxied through your backend** — the browser loads
 - **Site name / colors** — edit the CSS variables at the top of `style.css` (`:root { ... }`).
 - **Add more anime** — copy/paste another object into the array in `api/data.js`.
 - **Cover images** — any direct image URL works (`.jpg`, `.png`, `.webp`).
+## New: accounts, playlists, resume-watching, and the top banner
+
+- **`login.html` + `auth.js`** — registration/login page. Accounts are stored client-side in `localStorage` (no server, no database), so an account only exists in the browser it was created in. Not real security — don't reuse a sensitive password here.
+- **My List** — the "MY LIST" toggle on the catalog page and the "+ MY LIST" button on each title's episode page save/remove titles per signed-in user (`localStorage`, key `aa_playlist_<username>`).
+- **Continue Watching** — the homepage shows a row of in-progress titles. For `.mp4` episodes, playback position is tracked to the exact second via the native `<video>` element and resumed automatically. For `iframe` episodes, elapsed time is approximated from the episode's `duration` (same value used for auto-advance), since cross-origin iframes can't be inspected directly. Progress is stored per user (`localStorage`, key `aa_progress_<username>`).
+- **Top banner** — an auto-sliding banner (2s interval, click-to-open, clickable dots) featuring the latest and most-episode-heavy titles from the catalog.
+
+Browsing the catalog still works without an account — signing in only unlocks My List and Continue Watching.
