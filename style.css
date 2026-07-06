@@ -875,7 +875,7 @@ body.auth-body {
   margin-bottom: 22px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2; /* Unified unprefixed standard line-clamp parameter */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1467,37 +1467,54 @@ body.auth-body {
     width: 100%;
   }
 
-  /* Fixed Mobile Elastic Layout Block */
+  /* --- FIXED MOBILE CAROUSEL SLIDE ENGINE --- */
   .banner {
-    height: auto;
-    min-height: auto;
-    max-height: none;
-    padding: 32px 0;
-    display: flex;
-    flex-direction: column;
-    overflow: visible;
+    height: 460px; /* Restores concrete constraints so text layouts behave beautifully */
+    min-height: 460px;
+    padding: 0;
+    display: block;
   }
 
   .banner-slide {
-    position: relative;
-    opacity: 1 !important;
+    position: absolute; /* Reverts layout mechanics back to matching standard JavaScript loops */
+    inset: 0;
     display: flex;
     align-items: center;
-    pointer-events: auto;
-    background-image: none !important;
+    pointer-events: none;
+    opacity: 0 !important; /* Hides the standard layout strings to prevent stacked vertical leaks */
+    background-size: cover;
+    background-position: center;
   }
 
+  /* Exposes ONLY the single script-activated card array item at any single time */
+  .banner-slide.active {
+    opacity: 1 !important;
+    pointer-events: auto;
+    position: absolute;
+    z-index: 1;
+  }
+
+  /* Dark high-contrast vignette overlay to maximize string accessibility layers on mobile panels */
   .banner-slide::before {
-    display: none;
+    display: block;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: 
+      linear-gradient(to top, var(--bg) 12%, rgba(10,10,16,0.6) 45%, rgba(10,10,16,0.3) 100%),
+      linear-gradient(to right, rgba(10,10,16,0.92) 0%, rgba(10,10,16,0.4) 100%);
+    z-index: 0;
   }
 
   .banner-copy {
     max-width: 100%;
-    padding: 0 4vw;
+    padding: 0 5vw;
+    position: relative;
+    z-index: 2; /* Forces typography targets over layout background layers */
   }
 
   .banner-title {
-    font-size: clamp(28px, 6vw, 36px);
+    font-size: clamp(26px, 6.5vw, 34px);
     line-height: 1.1;
     margin-bottom: 12px;
   }
@@ -1505,17 +1522,17 @@ body.auth-body {
   .banner-synopsis {
     display: -webkit-box;
     -webkit-line-clamp: 3;
-    line-clamp: 3; /* Unified unprefixed standard line-clamp parameter */
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin-bottom: 20px;
-    font-size: 13.5px;
+    font-size: 13px;
     line-height: 1.5;
-    opacity: 0.75;
+    opacity: 0.8;
   }
 
   .banner-nav {
-    display: none !important;
+    display: none !important; /* Suppresses overlapping layout control indicators on low viewports */
   }
 
   .grid {
