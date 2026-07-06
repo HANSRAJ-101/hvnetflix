@@ -34,7 +34,7 @@ module.exports = [
     title: "David",
     cover: "https://image.tmdb.org/t/p/original/bESlrLOrsQ9gKzaGQGHXKOyIUtX.jpg",
     synopsis: " From the songs of his mother’s heart to the whispers of a faithful God, David’s story begins in quiet devotion. When the giant Goliath rises to terrorize a nation, a young shepherd armed with only a sling, a few stones, and unshakable faith steps forward. Pursued by power and driven by purpose, his journey tests the limits of loyalty, love, and courage—culminating in a battle not just for a crown, but for the soul of a kingdom.  ",
-    tags: ["Animation","Drama", "Family", "History",],
+    tags: ["Anime Movie", "Animation","Drama", "Family", "History",],
     episodes: [
       {
         number: 1,
