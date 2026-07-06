@@ -1063,6 +1063,154 @@ body.auth-body {
 .banner-nav-next { bottom: calc(50% + 4px); }
 .banner-nav-prev { bottom: calc(50% - 42px); }
 
+/* ---------- slide-position dots ---------- */
+.banner-dots {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(241,240,245,0.28);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, width 0.2s ease;
+}
+.banner-dot:hover { background: rgba(241,240,245,0.55); }
+.banner-dot.active {
+  width: 22px;
+  background: var(--grad-brand);
+}
+
+/* ---------- "upload your own banner image" customize UI ---------- */
+.banner-customize-btn {
+  position: absolute;
+  z-index: 3;
+  top: 20px;
+  right: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(241,240,245,0.22);
+  background: rgba(10,10,16,0.55);
+  color: var(--paper);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.banner-customize-btn:hover { border-color: var(--pink); background: rgba(10,10,16,0.75); }
+
+.banner-customize-panel {
+  position: absolute;
+  z-index: 3;
+  top: 64px;
+  right: 22px;
+  width: min(300px, calc(100vw - 44px));
+  background: rgba(15,15,23,0.92);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 50px -18px rgba(0,0,0,0.6);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.banner-customize-panel.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.banner-customize-title {
+  font-size: 11px;
+  color: var(--pink);
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.banner-customize-copy {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.banner-upload-btn,
+.banner-reposition-btn,
+.banner-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  font-size: 11.5px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: filter 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.banner-upload-btn {
+  background: var(--grad-brand);
+  color: #fff;
+  border: none;
+}
+.banner-upload-btn:hover { filter: brightness(1.08); }
+
+.banner-reposition-btn,
+.banner-reset-btn {
+  background: rgba(241,240,245,0.06);
+  border: 1px solid var(--border);
+  color: var(--paper);
+}
+.banner-reposition-btn:hover,
+.banner-reset-btn:hover { border-color: var(--paper); background: rgba(241,240,245,0.1); }
+.banner-reposition-btn[data-active="true"] {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+
+.banner-customize-error {
+  font-size: 11px;
+  color: var(--pink);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+/* While repositioning, the active slide becomes a crosshair click target */
+.banner-slide.repositioning { cursor: crosshair; }
+
+.banner-reposition-hint {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(10,10,16,0.7);
+  border: 1px solid var(--pink-dim);
+  color: var(--pink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ============================================================
    CATEGORIES ROW
    ============================================================ */
@@ -1560,6 +1708,26 @@ body.auth-body {
     display: none;
   }
 
+  .banner-customize-btn {
+    top: auto;
+    bottom: 18px;
+    right: 16px;
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+
+  .banner-customize-panel {
+    top: auto;
+    bottom: 62px;
+    right: 16px;
+  }
+
+  .banner-dots {
+    bottom: 16px;
+    left: 16px;
+    transform: none;
+  }
+
   .profile-grid {
     grid-template-columns: 1fr;
   }
@@ -1661,6 +1829,33 @@ body.auth-body {
 
   .banner-nav {
     display: none !important; /* Suppresses overlapping layout control indicators on low viewports */
+  }
+
+  .banner-dots {
+    left: 5vw;
+    bottom: 14px;
+    transform: none;
+    z-index: 3;
+  }
+
+  .banner-customize-btn {
+    top: 14px;
+    bottom: auto;
+    right: 4vw;
+    padding: 7px 11px;
+  }
+
+  .banner-customize-panel {
+    top: 58px;
+    bottom: auto;
+    right: 4vw;
+    width: min(280px, calc(100vw - 8vw));
+  }
+
+  .banner-reposition-hint {
+    top: 60px;
+    font-size: 10px;
+    padding: 6px 12px;
   }
 
   .grid {

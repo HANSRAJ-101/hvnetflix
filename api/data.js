@@ -46,7 +46,7 @@ module.exports = [
   },
   {
     id: 2,
-    title: "India’s Got Latent (Season 2) ",
+    title: "Indias Got Latent Season 2  ",
     cover: "https://image.tmdb.org/t/p/w500/eml0QA3zUMizBvrlfQKhWI0swVh.jpg",
     synopsis: "Comedy  Reality. Replace with your own series description.",
     tags: [" 4K | 1080p | 720p | 480p  ", "Hindi"],
@@ -106,8 +106,8 @@ module.exports = [
   },
   {
     id: 4,
-    title: "Dr. STONE",
-    cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF-K4_0tIgDWOWLHxekBuVIFNK0iCDV8HgLraqe7huHA&s",
+    title: "Dr STONE",
+    cover: "https://i.postimg.cc/T10gjyVx/upscalemedia-transformed-(10).png",
     synopsis: "Add your own synopsis here.",
     tags: ["Season 1"],
     episodes: [
@@ -133,7 +133,7 @@ module.exports = [
     title: "Chainsaw Man – The Movie: Reze Arc",
     cover: "https://image.tmdb.org/t/p/w500/pHyxb2RV5wLlboAwm9ZJ9qTVEDw.jpg",
     synopsis: "In a brutal war between devils, hunters, and secret enemies, a mysterious girl named Reze has stepped into Denji’s world, and he faces his deadliest battle yet, fueled by love in a world where survival knows no rules..",
-    tags: ["Animation","Action","Romance ","Fantasy","Anime Movie"],
+    tags: ["Animation","Action","Romance ","Fantasy ","Anime Movie"],
     episodes: [
       {
         number: 1,
@@ -145,5 +145,20 @@ module.exports = [
         src: "https://rumble.com/embed/v7a58uo/?pub=4pw4c8"
       }
     ]
-  }
+  },
+    {
+    id: 6,
+    title: "Your Name",
+    cover: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg",
+    synopsis: "High schoolers Mitsuha and Taki are complete strangers living separate lives. But one night, they suddenly switch places. Mitsuha wakes up in Taki’s body, and he in hers. This bizarre occurrence continues to happen randomly, and the two must adjust their lives around each other.",
+    tags: ["Animation","Romance ","Fantasy","Anime Movie","Drama"],
+    episodes: [
+      {
+        number: 1,
+        title: "Movie",
+        type: "iframe",
+        src: "https://rumble.com/embed/v7a5feq/?pub=4pw4c8"
+      }
+    ]
+  },
 ];
