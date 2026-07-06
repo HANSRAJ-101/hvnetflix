@@ -13,6 +13,7 @@ const searchDropdown = document.getElementById("searchDropdown");
 const authArea = document.getElementById("authArea");
 const mylistToggle = document.getElementById("mylistToggle");
 const categoryRow = document.getElementById("categoryRow");
+const bannerEl = document.getElementById("banner");
 const continueRow = document.getElementById("continueRow");
 const continueList = document.getElementById("continueList");
 const topList = document.getElementById("topList");
@@ -106,6 +107,7 @@ async function loadCatalog(query = "") {
 
     if (!query) {
       lastCatalog = data;
+      initBanner(data);
       renderContinueWatching(data);
       renderCategories(data);
       renderTopList(data);
@@ -224,6 +226,90 @@ mylistToggle.addEventListener("click", () => {
   mylistToggle.classList.toggle("active", mylistActive);
   renderGrid(applyFilters(lastCatalog));
 });
+
+// ---------- top sliding banner ----------
+let bannerSlides = [];
+let bannerIndex = 0;
+let bannerTimer = null;
+const BANNER_INTERVAL_MS = 2000;
+
+function initBanner(list) {
+  // Feature up to 5 titles — furthest along in the catalog order counts
+  // as "latest," most episodes counts as "popular."
+  const byLatest = [...list].slice(-5).reverse();
+  const byPopular = [...list].sort((a, b) => b.episodeCount - a.episodeCount);
+  const merged = [];
+  const seen = new Set();
+  [...byLatest, ...byPopular].forEach((a) => {
+    if (!seen.has(a.id) && merged.length < 5) {
+      seen.add(a.id);
+      merged.push(a);
+    }
+  });
+
+  bannerSlides = merged;
+  bannerIndex = 0;
+  renderBanner();
+  startBannerAutoplay();
+}
+
+function renderBanner() {
+  if (!bannerSlides.length) {
+    bannerEl.classList.add("hidden");
+    return;
+  }
+  bannerEl.classList.remove("hidden");
+
+  bannerEl.innerHTML =
+    bannerSlides
+      .map(
+        (a, i) => `
+      <div class="banner-slide${i === bannerIndex ? " active" : ""}" style="background-image:url('${escapeHtml(a.cover)}')">
+        <div class="banner-copy">
+          <span class="banner-eyebrow mono">#${i + 1} SPOTLIGHT</span>
+          <h2 class="banner-title">${escapeHtml(a.title)}</h2>
+          <div class="banner-meta mono">
+            <span class="banner-meta-item">📺 SERIES</span>
+            <span class="banner-meta-item">🕐 ${pad(a.episodeCount)} EP</span>
+            ${a.tags && a.tags[0] ? `<span class="banner-badge">${escapeHtml(a.tags[0])}</span>` : ""}
+          </div>
+          <p class="banner-synopsis">${escapeHtml(a.synopsis || "")}</p>
+          <div class="banner-actions">
+            <button class="banner-watch-btn" data-id="${a.id}">▶ Watch Now</button>
+            <button class="banner-detail-btn" data-id="${a.id}">Detail ›</button>
+          </div>
+        </div>
+      </div>`
+      )
+      .join("") +
+    `<button class="banner-nav banner-nav-next" aria-label="Next">›</button>
+     <button class="banner-nav banner-nav-prev" aria-label="Previous">‹</button>`;
+
+  bannerEl.querySelectorAll(".banner-watch-btn, .banner-detail-btn").forEach((el) => {
+    el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
+  });
+  bannerEl.querySelector(".banner-nav-next").addEventListener("click", () => {
+    goToBannerSlide(bannerIndex + 1);
+    startBannerAutoplay();
+  });
+  bannerEl.querySelector(".banner-nav-prev").addEventListener("click", () => {
+    goToBannerSlide(bannerIndex - 1);
+    startBannerAutoplay();
+  });
+}
+
+function goToBannerSlide(index) {
+  bannerIndex = (index + bannerSlides.length) % bannerSlides.length;
+  renderBanner();
+}
+
+function startBannerAutoplay() {
+  clearInterval(bannerTimer);
+  if (bannerSlides.length <= 1) return;
+  bannerTimer = setInterval(() => {
+    goToBannerSlide(bannerIndex + 1);
+  }, BANNER_INTERVAL_MS);
+}
 
 // ---------- continue watching ----------
 function renderContinueWatching(list) {
@@ -588,14 +674,6 @@ function saveIframeProgressTick(durationSeconds) {
   const remainingMs = Math.max(0, autoAdvanceDeadline - now);
   const elapsed = Math.max(0, durationSeconds - remainingMs / 1000);
   saveWatchProgress(elapsed, durationSeconds);
-}
-
-function checkAutoAdvanceDeadline() {
-  if (autoAdvanceDeadline && Date.now() >= autoAdvanceDeadline) {
-    clearAutoAdvanceTimer();
-    saveWatchProgress(0, 0);
-    playNextEpisode();
-  }
 }
 
 function checkAutoAdvanceDeadline() {
