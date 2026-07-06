@@ -80,10 +80,7 @@
       <div class="watch-center-col">
         <div class="player-shell">
           <div id="playerMount" class="player-mount">
-            <iframe id="rumbleFrame" width="640" height="360"
-              src="https://rumble.com/embed/v7a5ce6/?pub=4pw4c8"
-              frameborder="0" allowfullscreen>
-            </iframe>
+            <p class="player-placeholder mono">SELECT AN EPISODE →</p>
           </div>
         </div>
 
@@ -127,17 +124,6 @@
 <script>
   // Automatically update the year
   document.getElementById("year").textContent = new Date().getFullYear();
-</script>
-
-<script>
-  // Redirect to main site after the embedded video's estimated runtime.
-  // NOTE: Rumble's iframe embed doesn't expose an "ended" event across origins,
-  // so this uses a fixed timer as a fallback. Update durationMs to match the
-  // actual video length in milliseconds.
-  const durationMs = 300000; // 5 minutes — adjust to real video length
-  setTimeout(() => {
-    window.location.href = "https://archive-anime.vercel.app/";
-  }, durationMs);
 </script>
 
 <script src="auth.js"></script>
