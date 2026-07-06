@@ -13,7 +13,6 @@ const searchDropdown = document.getElementById("searchDropdown");
 const authArea = document.getElementById("authArea");
 const mylistToggle = document.getElementById("mylistToggle");
 const categoryRow = document.getElementById("categoryRow");
-const bannerEl = document.getElementById("banner");
 const continueRow = document.getElementById("continueRow");
 const continueList = document.getElementById("continueList");
 const topList = document.getElementById("topList");
@@ -107,7 +106,6 @@ async function loadCatalog(query = "") {
 
     if (!query) {
       lastCatalog = data;
-      initBanner(data);
       renderContinueWatching(data);
       renderCategories(data);
       renderTopList(data);
@@ -226,243 +224,6 @@ mylistToggle.addEventListener("click", () => {
   mylistToggle.classList.toggle("active", mylistActive);
   renderGrid(applyFilters(lastCatalog));
 });
-
-// ---------- top sliding banner ----------
-let bannerSlides = [];
-let bannerIndex = 0;
-let bannerTimer = null;
-const BANNER_INTERVAL_MS = 6000;
-
-// Whether the "customize banner" panel is currently open, and whether
-// we're in "click the image to reposition" mode. Kept outside render()
-// so re-rendering the banner (e.g. after a slide change) doesn't close it.
-let bannerCustomizeOpen = false;
-let bannerRepositionMode = false;
-
-// ---------- banner image overrides (client-side "upload your own banner") ----------
-// Since this site has no real upload backend, a custom banner image is
-// compressed client-side and stored as a data URL in localStorage, keyed
-// by anime id, alongside an optional focal point for repositioning.
-// Shape: { [animeId]: { image: "data:image/jpeg;base64,...", focalX: 0-100, focalY: 0-100 } }
-const BANNER_OVERRIDE_KEY = "aa_banner_overrides";
-const BANNER_MAX_DIMENSION = 1600; // px — plenty sharp for any screen, keeps storage small
-const BANNER_JPEG_QUALITY = 0.82;
-
-function getBannerOverrides() {
-  try {
-    return JSON.parse(localStorage.getItem(BANNER_OVERRIDE_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveBannerOverride(animeId, fields) {
-  const all = getBannerOverrides();
-  all[animeId] = { ...all[animeId], ...fields };
-  localStorage.setItem(BANNER_OVERRIDE_KEY, JSON.stringify(all));
-}
-
-function clearBannerOverride(animeId) {
-  const all = getBannerOverrides();
-  delete all[animeId];
-  localStorage.setItem(BANNER_OVERRIDE_KEY, JSON.stringify(all));
-}
-
-// Downscales + re-encodes an uploaded image on a <canvas> so it (a) never
-// stretches or distorts — we preserve the original aspect ratio and only
-// ever crop via CSS `background-size: cover`, never resize the raw pixels
-// non-uniformly — and (b) stays small enough for localStorage regardless
-// of how large the source photo was.
-function compressImageFile(file) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith("image/")) {
-      reject(new Error("Please choose an image file."));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Could not read that file."));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Could not read that image."));
-      img.onload = () => {
-        const scale = Math.min(1, BANNER_MAX_DIMENSION / Math.max(img.width, img.height));
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", BANNER_JPEG_QUALITY));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function initBanner(list) {
-  // Show the 5 most recently uploaded titles — catalog order reflects
-  // upload order (new anime are appended in data.js), so the last 5
-  // entries, newest first, are exactly that.
-  bannerSlides = [...list].slice(-5).reverse();
-  bannerIndex = 0;
-  bannerCustomizeOpen = false;
-  bannerRepositionMode = false;
-  renderBanner();
-  startBannerAutoplay();
-}
-
-function renderBanner() {
-  if (!bannerSlides.length) {
-    bannerEl.classList.add("hidden");
-    return;
-  }
-  bannerEl.classList.remove("hidden");
-
-  const overrides = getBannerOverrides();
-  const active = bannerSlides[bannerIndex];
-  const activeOverride = overrides[active.id];
-
-  bannerEl.innerHTML =
-    bannerSlides
-      .map((a, i) => {
-        const ov = overrides[a.id];
-        const img = (ov && ov.image) || a.cover;
-        const pos = ov ? `${ov.focalX ?? 50}% ${ov.focalY ?? 50}%` : "center";
-        return `
-      <div class="banner-slide${i === bannerIndex ? " active" : ""}${bannerRepositionMode && i === bannerIndex ? " repositioning" : ""}" style="background-image:url('${escapeHtml(img)}');background-position:${pos}">
-        <div class="banner-copy">
-          <span class="banner-eyebrow mono">#${i + 1} SPOTLIGHT</span>
-          <h2 class="banner-title">${escapeHtml(a.title)}</h2>
-          <div class="banner-meta mono">
-            <span class="banner-meta-item">📺 SERIES</span>
-            <span class="banner-meta-item">🕐 ${pad(a.episodeCount)} EP</span>
-            ${a.tags && a.tags[0] ? `<span class="banner-badge">${escapeHtml(a.tags[0])}</span>` : ""}
-          </div>
-          <p class="banner-synopsis">${escapeHtml(a.synopsis || "")}</p>
-          <div class="banner-actions">
-            <button class="banner-watch-btn" data-id="${a.id}">▶ Watch Now</button>
-            <button class="banner-detail-btn" data-id="${a.id}">Detail ›</button>
-          </div>
-        </div>
-        ${bannerRepositionMode && i === bannerIndex ? `<div class="banner-reposition-hint mono">Click anywhere to set the focal point</div>` : ""}
-      </div>`;
-      })
-      .join("") +
-    `<button class="banner-nav banner-nav-next" aria-label="Next slide">›</button>
-     <button class="banner-nav banner-nav-prev" aria-label="Previous slide">‹</button>
-     <div class="banner-dots" role="tablist" aria-label="Banner slides">
-       ${bannerSlides
-         .map(
-           (a, i) =>
-             `<button class="banner-dot${i === bannerIndex ? " active" : ""}" role="tab" aria-label="Show ${escapeHtml(a.title)}" data-index="${i}"></button>`
-         )
-         .join("")}
-     </div>
-     <button class="banner-customize-btn mono" type="button" aria-expanded="${bannerCustomizeOpen}">
-       ${bannerCustomizeOpen ? "✕ Close" : "✎ Customize Banner"}
-     </button>
-     <div class="banner-customize-panel${bannerCustomizeOpen ? " open" : ""}">
-       <div class="banner-customize-title mono">CUSTOMIZE THIS SLIDE</div>
-       <p class="banner-customize-copy">Upload your own image for “${escapeHtml(active.title)}.” It's resized automatically so it always fills the banner cleanly on any screen — no stretching.</p>
-       <label class="banner-upload-btn mono">
-         ⬆ Upload Image
-         <input type="file" accept="image/*" class="banner-file-input hidden" />
-       </label>
-       <button type="button" class="banner-reposition-btn mono"${bannerRepositionMode ? " data-active=\"true\"" : ""}>${bannerRepositionMode ? "◎ Click image to set focal point…" : "◎ Reposition Image"}</button>
-       ${activeOverride ? `<button type="button" class="banner-reset-btn mono">↺ Reset to Cover Art</button>` : ""}
-       <p id="bannerCustomizeError" class="banner-customize-error mono hidden"></p>
-     </div>`;
-
-  // ----- slide actions -----
-  bannerEl.querySelectorAll(".banner-watch-btn, .banner-detail-btn").forEach((el) => {
-    el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
-  });
-  bannerEl.querySelector(".banner-nav-next").addEventListener("click", () => {
-    goToBannerSlide(bannerIndex + 1);
-    startBannerAutoplay();
-  });
-  bannerEl.querySelector(".banner-nav-prev").addEventListener("click", () => {
-    goToBannerSlide(bannerIndex - 1);
-    startBannerAutoplay();
-  });
-  bannerEl.querySelectorAll(".banner-dot").forEach((dot) => {
-    dot.addEventListener("click", () => {
-      goToBannerSlide(Number(dot.dataset.index));
-      startBannerAutoplay();
-    });
-  });
-
-  // ----- customize panel -----
-  bannerEl.querySelector(".banner-customize-btn").addEventListener("click", () => {
-    bannerCustomizeOpen = !bannerCustomizeOpen;
-    if (!bannerCustomizeOpen) bannerRepositionMode = false;
-    renderBanner();
-  });
-
-  const fileInput = bannerEl.querySelector(".banner-file-input");
-  if (fileInput) {
-    fileInput.addEventListener("change", async () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-      const errorEl = document.getElementById("bannerCustomizeError");
-      errorEl.classList.add("hidden");
-      try {
-        const dataUrl = await compressImageFile(file);
-        saveBannerOverride(bannerSlides[bannerIndex].id, { image: dataUrl, focalX: 50, focalY: 50 });
-        renderBanner();
-      } catch (err) {
-        errorEl.textContent = err.message || "Could not process that image.";
-        errorEl.classList.remove("hidden");
-      }
-    });
-  }
-
-  const repositionBtn = bannerEl.querySelector(".banner-reposition-btn");
-  if (repositionBtn) {
-    repositionBtn.addEventListener("click", () => {
-      bannerRepositionMode = !bannerRepositionMode;
-      renderBanner();
-    });
-  }
-
-  const resetBtn = bannerEl.querySelector(".banner-reset-btn");
-  if (resetBtn) {
-    resetBtn.addEventListener("click", () => {
-      clearBannerOverride(bannerSlides[bannerIndex].id);
-      bannerRepositionMode = false;
-      renderBanner();
-    });
-  }
-
-  if (bannerRepositionMode) {
-    const activeSlide = bannerEl.querySelector(".banner-slide.active");
-    if (activeSlide) {
-      activeSlide.addEventListener("click", (e) => {
-        const rect = activeSlide.getBoundingClientRect();
-        const focalX = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-        const focalY = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-        saveBannerOverride(bannerSlides[bannerIndex].id, { focalX, focalY });
-        bannerRepositionMode = false;
-        renderBanner();
-      });
-    }
-  }
-}
-
-function goToBannerSlide(index) {
-  bannerIndex = (index + bannerSlides.length) % bannerSlides.length;
-  bannerRepositionMode = false;
-  renderBanner();
-}
-
-function startBannerAutoplay() {
-  clearInterval(bannerTimer);
-  if (bannerSlides.length <= 1 || bannerCustomizeOpen) return;
-  bannerTimer = setInterval(() => {
-    goToBannerSlide(bannerIndex + 1);
-  }, BANNER_INTERVAL_MS);
-}
 
 // ---------- continue watching ----------
 function renderContinueWatching(list) {
@@ -827,6 +588,14 @@ function saveIframeProgressTick(durationSeconds) {
   const remainingMs = Math.max(0, autoAdvanceDeadline - now);
   const elapsed = Math.max(0, durationSeconds - remainingMs / 1000);
   saveWatchProgress(elapsed, durationSeconds);
+}
+
+function checkAutoAdvanceDeadline() {
+  if (autoAdvanceDeadline && Date.now() >= autoAdvanceDeadline) {
+    clearAutoAdvanceTimer();
+    saveWatchProgress(0, 0);
+    playNextEpisode();
+  }
 }
 
 function checkAutoAdvanceDeadline() {
