@@ -15,6 +15,7 @@ const categoryRow = document.getElementById("categoryRow");
 const bannerEl = document.getElementById("banner");
 const continueRow = document.getElementById("continueRow");
 const continueList = document.getElementById("continueList");
+const topList = document.getElementById("topList");
 
 const overlay = document.getElementById("overlay");
 const drawer = document.getElementById("drawer");
@@ -25,6 +26,10 @@ const drawerSynopsis = document.getElementById("drawerSynopsis");
 const drawerTags = document.getElementById("drawerTags");
 const episodeList = document.getElementById("episodeList");
 const playlistBtn = document.getElementById("playlistBtn");
+const watchInfoCover = document.getElementById("watchInfoCover");
+const episodeFilter = document.getElementById("episodeFilter");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+const shareBtn = document.getElementById("shareBtn");
 
 let debounceTimer = null;
 let mylistActive = false;
@@ -104,6 +109,7 @@ async function loadCatalog(query = "") {
       initBanner(data);
       renderContinueWatching(data);
       renderCategories(data);
+      renderTopList(data);
     }
 
     renderGrid(applyFilters(data));
@@ -150,6 +156,33 @@ function renderCategories(list) {
       chip.classList.add("active");
       renderGrid(applyFilters(lastCatalog));
     });
+  });
+}
+
+// ---------- sidebar: top titles by episode count ----------
+function renderTopList(list) {
+  if (!topList) return;
+  const top = [...list].sort((a, b) => b.episodeCount - a.episodeCount).slice(0, 5);
+
+  topList.innerHTML = top
+    .map(
+      (a, i) => `
+      <li>
+        <button class="top-item" data-id="${a.id}">
+          <span class="top-rank mono">${pad(i + 1)}</span>
+          <img class="top-thumb" src="${escapeHtml(a.cover)}" alt="" loading="lazy" />
+          <div class="top-info">
+            <div class="top-info-title">${escapeHtml(a.title)}</div>
+            <div class="top-info-sub">EP ${pad(a.episodeCount)}</div>
+          </div>
+        </button>
+      </li>
+    `
+    )
+    .join("");
+
+  topList.querySelectorAll(".top-item").forEach((el) => {
+    el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
   });
 }
 
@@ -226,31 +259,41 @@ function renderBanner() {
   }
   bannerEl.classList.remove("hidden");
 
-  bannerEl.innerHTML = bannerSlides
-    .map(
-      (a, i) => `
-      <div class="banner-slide${i === bannerIndex ? " active" : ""}" style="background-image:url('${escapeHtml(a.cover)}')" data-id="${a.id}">
+  bannerEl.innerHTML =
+    bannerSlides
+      .map(
+        (a, i) => `
+      <div class="banner-slide${i === bannerIndex ? " active" : ""}" style="background-image:url('${escapeHtml(a.cover)}')">
         <div class="banner-copy">
-          <span class="banner-eyebrow mono">${i === 0 ? "LATEST" : "POPULAR"} · EP ${pad(a.episodeCount)}</span>
-          <div class="banner-title">${escapeHtml(a.title)}</div>
+          <span class="banner-eyebrow mono">#${i + 1} SPOTLIGHT</span>
+          <h2 class="banner-title">${escapeHtml(a.title)}</h2>
+          <div class="banner-meta mono">
+            <span class="banner-meta-item">📺 SERIES</span>
+            <span class="banner-meta-item">🕐 ${pad(a.episodeCount)} EP</span>
+            ${a.tags && a.tags[0] ? `<span class="banner-badge">${escapeHtml(a.tags[0])}</span>` : ""}
+          </div>
           <p class="banner-synopsis">${escapeHtml(a.synopsis || "")}</p>
+          <div class="banner-actions">
+            <button class="banner-watch-btn" data-id="${a.id}">▶ Watch Now</button>
+            <button class="banner-detail-btn" data-id="${a.id}">Detail ›</button>
+          </div>
         </div>
       </div>`
-    )
-    .join("") +
-    `<div class="banner-dots">${bannerSlides
-      .map((_, i) => `<button class="banner-dot${i === bannerIndex ? " active" : ""}" data-index="${i}"></button>`)
-      .join("")}</div>`;
+      )
+      .join("") +
+    `<button class="banner-nav banner-nav-next" aria-label="Next">›</button>
+     <button class="banner-nav banner-nav-prev" aria-label="Previous">‹</button>`;
 
-  bannerEl.querySelectorAll(".banner-slide").forEach((el) => {
+  bannerEl.querySelectorAll(".banner-watch-btn, .banner-detail-btn").forEach((el) => {
     el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
   });
-  bannerEl.querySelectorAll(".banner-dot").forEach((el) => {
-    el.addEventListener("click", (e) => {
-      e.stopPropagation();
-      goToBannerSlide(Number(el.dataset.index));
-      startBannerAutoplay(); // reset the clock on manual interaction
-    });
+  bannerEl.querySelector(".banner-nav-next").addEventListener("click", () => {
+    goToBannerSlide(bannerIndex + 1);
+    startBannerAutoplay();
+  });
+  bannerEl.querySelector(".banner-nav-prev").addEventListener("click", () => {
+    goToBannerSlide(bannerIndex - 1);
+    startBannerAutoplay();
   });
 }
 
@@ -331,6 +374,9 @@ function renderDrawer(anime) {
   drawerTitle.textContent = anime.title;
   drawerSynopsis.textContent = anime.synopsis;
   drawerTags.innerHTML = (anime.tags || []).map(t => `<span>${escapeHtml(t)}</span>`).join("");
+  watchInfoCover.src = anime.cover;
+  watchInfoCover.alt = `${anime.title} cover art`;
+  if (episodeFilter) episodeFilter.value = "";
 
   playerMount.innerHTML = `<p class="player-placeholder mono">SELECT AN EPISODE →</p>`;
   removeDynamicPlayerControls();
@@ -744,6 +790,50 @@ overlay.addEventListener("click", hideDrawer);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") hideDrawer();
 });
+
+// ---------- episode filter (by number or title text) ----------
+if (episodeFilter) {
+  episodeFilter.addEventListener("input", () => {
+    const q = episodeFilter.value.trim().toLowerCase();
+    episodeList.querySelectorAll(".episode-item").forEach((btn) => {
+      const li = btn.closest("li");
+      const text = btn.textContent.toLowerCase();
+      li.style.display = !q || text.includes(q) ? "" : "none";
+    });
+  });
+}
+
+// ---------- fullscreen ----------
+if (fullscreenBtn) {
+  fullscreenBtn.addEventListener("click", () => {
+    const shell = document.querySelector(".player-shell");
+    if (!shell) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      shell.requestFullscreen?.();
+    }
+  });
+}
+
+// ---------- share ----------
+if (shareBtn) {
+  shareBtn.addEventListener("click", async () => {
+    if (!currentAnime) return;
+    const url = `${window.location.origin}${window.location.pathname}?open=${currentAnime.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: currentAnime.title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        shareBtn.textContent = "✓ Copied";
+        setTimeout(() => (shareBtn.textContent = "🔗 Share"), 1500);
+      }
+    } catch {
+      // user cancelled the native share sheet — nothing to do
+    }
+  });
+}
 
 // ---------- search ----------
 searchInput.addEventListener("input", (e) => {

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="google-site-verification" content="LDPSs37gZRGXWaDW-_QHeT_ZDjQqteGvsHy3t049vv4" />
 <title>Anime Archive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -39,41 +40,81 @@
       <span class="divider-line"></span>
     </section>
 
-    <section id="grid" class="grid" aria-live="polite"></section>
+    <div class="catalog-layout">
+      <div class="catalog-main">
+        <section id="grid" class="grid" aria-live="polite"></section>
 
-    <p id="emptyState" class="empty-state hidden">
-      No titles match that search. Try another keyword.
-    </p>
+        <p id="emptyState" class="empty-state hidden">
+          No titles match that search. Try another keyword.
+        </p>
+      </div>
+
+      <aside class="sidebar-col">
+        <div class="side-panel">
+          <div class="side-panel-head">
+            <span class="side-panel-title">TOP TITLES</span>
+          </div>
+          <ol id="topList" class="top-list"></ol>
+        </div>
+      </aside>
+    </div>
   </main>
 
-  <!-- Slide-in drawer: episode list + player -->
+  <!-- Full-screen watch view: episode rail + player + info panel -->
   <div id="overlay" class="overlay hidden"></div>
   <aside id="drawer" class="drawer hidden" aria-hidden="true">
     <button id="closeDrawer" class="close-btn" aria-label="Close">×</button>
 
-    <div class="player-shell">
-      <div id="playerMount" class="player-mount">
-        <p class="player-placeholder mono">SELECT AN EPISODE →</p>
-      </div>
-    </div>
+    <div class="watch-layout">
 
-    <div class="drawer-info">
-      <div class="drawer-title-row">
-        <h2 id="drawerTitle" class="drawer-title"></h2>
-        <button id="playlistBtn" class="playlist-btn mono">+ MY LIST</button>
+      <!-- LEFT: episode rail -->
+      <div class="watch-episodes-col">
+        <div class="watch-episodes-head">
+          <h3 class="mono">EPISODE LIST</h3>
+          <input id="episodeFilter" class="episode-filter mono" type="text" placeholder="Episode number" autocomplete="off" />
+        </div>
+        <ol id="episodeList" class="episode-list"></ol>
       </div>
-      <p id="drawerSynopsis" class="drawer-synopsis"></p>
-      <div id="drawerTags" class="drawer-tags"></div>
-    </div>
 
-    <div class="episode-index">
-      <h3 class="mono index-label">EPISODES</h3>
-      <ol id="episodeList" class="episode-list"></ol>
+      <!-- CENTER: player -->
+      <div class="watch-center-col">
+        <div class="player-shell">
+          <div id="playerMount" class="player-mount">
+            <p class="player-placeholder mono">SELECT AN EPISODE →</p>
+          </div>
+        </div>
+
+        <div class="watch-toolbar mono">
+          <button id="fullscreenBtn" class="watch-tool-btn" title="Fullscreen">⛶ Fullscreen</button>
+          <span class="watch-tool-note">⚠ Player not loading? Try another episode or reopen.</span>
+          <div class="watch-toolbar-spacer"></div>
+          <button id="playlistBtn" class="playlist-btn mono">+ MY LIST</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: anime info panel -->
+      <aside class="watch-info-col">
+        <img id="watchInfoCover" class="watch-info-cover" src="" alt="" />
+        <div class="drawer-info">
+          <h2 id="drawerTitle" class="drawer-title"></h2>
+          <div id="drawerTags" class="drawer-tags"></div>
+          <p id="drawerSynopsis" class="drawer-synopsis"></p>
+        </div>
+        <div class="watch-share-row">
+          <span class="watch-share-label mono">Share This Anime</span>
+          <button id="shareBtn" class="watch-share-btn mono">🔗 Share</button>
+        </div>
+      </aside>
+
     </div>
   </aside>
 
   <footer class="site-footer">
     <p class="mono">ANIME ARCHIVE — static front end + serverless API, deployed on Vercel.</p>
+    <div class="footer-links mono">
+      <a href="https://discord.gg/NVFeE5ygF2" target="_blank" rel="noopener noreferrer">💬 Support Discord</a>
+      <a href="mailto:hnsrjsih4@gmail.com">✉ hnsrjsih4@gmail.com</a>
+    </div>
   </footer>
 
   <script src="auth.js"></script>
