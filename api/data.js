@@ -127,5 +127,23 @@ module.exports = [
         src: "https://desidubanime.p2pplay.pro/#kl5eju"
       }
     ]
+  },
+  {
+    id: 5,
+    title: "Chainsaw Man – The Movie: Reze Arc",
+    cover: "https://image.tmdb.org/t/p/w500/pHyxb2RV5wLlboAwm9ZJ9qTVEDw.jpg",
+    synopsis: "In a brutal war between devils, hunters, and secret enemies, a mysterious girl named Reze has stepped into Denji’s world, and he faces his deadliest battle yet, fueled by love in a world where survival knows no rules..",
+    tags: ["Animation","Action","Romance ","Fantasy","Anime Movie"],
+    episodes: [
+      {
+        number: 1,
+        title: "Movie",
+        type: "iframe",
+        // Derived from the watch-page slug https://rumble.com/v7bzixm-...html
+        // If this doesn't play, go to the video on rumble.com -> Share -> Embed
+        // and paste the exact URL from that embed code here instead.
+        src: "https://rumble.com/embed/v7a58uo/?pub=4pw4c8"
+      }
+    ]
   }
 ];

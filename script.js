@@ -496,44 +496,13 @@ function saveWatchProgress(time, duration) {
   });
 }
 
-// Where to send viewers once they finish the last episode of a title.
-const MAIN_SITE_URL = "https://archive-anime.vercel.app/";
-// Small pause before redirecting so "last episode ended" doesn't feel like
-// an abrupt yank away from the page — long enough to register, short enough
-// not to feel like a stall.
-const END_OF_SERIES_REDIRECT_DELAY_MS = 3000;
-
-// Advances to the next episode if one exists; otherwise the series is over,
-// so send the viewer back to the main site after a short delay.
+// Advances to the next episode, if one exists.
 function playNextEpisode() {
   if (!currentAnime) return;
   const nextIndex = currentEpisodeIndex + 1;
   if (nextIndex < currentAnime.episodes.length) {
     selectEpisode(nextIndex);
-    return;
   }
-
-  showEndOfSeriesRedirect();
-}
-
-// Shows a brief "series finished" message in place of the Next button,
-// then redirects to the main site. Reuses the #nextEpisodeControl slot so
-// it appears in the same spot the Next/auto-advance hint normally would.
-function showEndOfSeriesRedirect() {
-  const existing = document.getElementById("nextEpisodeControl");
-  if (existing) existing.remove();
-
-  const wrap = document.createElement("div");
-  wrap.id = "nextEpisodeControl";
-  wrap.className = "next-episode-control";
-  wrap.innerHTML = `
-    <span class="next-episode-hint mono">THAT'S THE LAST EPISODE — REDIRECTING…</span>
-  `;
-  playerMount.insertAdjacentElement("afterend", wrap);
-
-  setTimeout(() => {
-    window.location.href = MAIN_SITE_URL;
-  }, END_OF_SERIES_REDIRECT_DELAY_MS);
 }
 
 function loadPlayer(episode) {

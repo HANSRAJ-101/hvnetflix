@@ -66,7 +66,6 @@ body {
   gap: 24px;
   padding: 20px 5vw;
   border-bottom: 1px solid var(--border-soft);
-  flex-wrap: wrap;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -108,7 +107,7 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  min-width: 260px;
+  min-width: 200px;
   flex: 0 1 380px;
 }
 
@@ -160,14 +159,10 @@ main { padding: 0 5vw 60px; }
   gap: 32px;
   align-items: start;
 }
-@media (max-width: 980px) {
-  .catalog-layout { grid-template-columns: 1fr; }
-  .sidebar-col { order: 2; }
-}
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
 }
 
@@ -250,7 +245,7 @@ main { padding: 0 5vw 60px; }
 }
 
 /* ============================================================
-   SIDEBAR (Top / Genres) — hianime-inspired
+   SIDEBAR (Top Titles)
    ============================================================ */
 .sidebar-col { display: flex; flex-direction: column; gap: 24px; }
 
@@ -276,19 +271,6 @@ main { padding: 0 5vw 60px; }
   background-clip: text;
   color: transparent;
 }
-
-.top-tabs { display: flex; gap: 4px; background: var(--panel-2); border-radius: 999px; padding: 3px; }
-.top-tab {
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 10px;
-  font-family: var(--font-mono);
-  padding: 5px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.top-tab.active { background: var(--pink); color: #fff; }
 
 .top-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
 
@@ -317,9 +299,9 @@ main { padding: 0 5vw 60px; }
   color: var(--muted-dim);
   -webkit-text-stroke: 1px var(--border);
 }
-.top-item:nth-child(1) .top-rank,
-.top-item:nth-child(2) .top-rank,
-.top-item:nth-child(3) .top-rank {
+.top-list li:nth-child(1) .top-rank,
+.top-list li:nth-child(2) .top-rank,
+.top-list li:nth-child(3) .top-rank {
   background: var(--grad-brand);
   -webkit-background-clip: text;
   background-clip: text;
@@ -385,6 +367,9 @@ main { padding: 0 5vw 60px; }
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .close-btn:hover { background: var(--pink); border-color: var(--pink); }
@@ -398,10 +383,6 @@ main { padding: 0 5vw 60px; }
   min-height: 100vh;
 }
 
-@media (max-width: 1100px) {
-  .watch-layout { grid-template-columns: 1fr; }
-}
-
 .watch-episodes-col {
   border-right: 1px solid var(--border-soft);
   height: 100vh;
@@ -409,7 +390,6 @@ main { padding: 0 5vw 60px; }
   padding: 20px 16px 40px;
   background: var(--bg-soft);
 }
-@media (max-width: 1100px) { .watch-episodes-col { height: auto; order: 3; border-right: none; border-top: 1px solid var(--border-soft); } }
 
 .watch-episodes-head {
   display: flex;
@@ -437,7 +417,6 @@ main { padding: 0 5vw 60px; }
   padding: 20px 22px 40px;
   border-right: 1px solid var(--border-soft);
 }
-@media (max-width: 1100px) { .watch-center-col { border-right: none; order: 1; } }
 
 .watch-toolbar {
   display: flex;
@@ -463,7 +442,6 @@ main { padding: 0 5vw 60px; }
 .watch-info-col {
   padding: 20px 20px 40px;
 }
-@media (max-width: 1100px) { .watch-info-col { order: 2; } }
 
 .watch-info-cover {
   width: 100%;
@@ -587,8 +565,6 @@ main { padding: 0 5vw 60px; }
   color: var(--pink);
 }
 
-.drawer-info { padding: 0; }
-
 .drawer-title {
   font-family: var(--font-display);
   font-size: 26px;
@@ -616,14 +592,6 @@ main { padding: 0 5vw 60px; }
   color: var(--violet);
   padding: 3px 8px;
   border-radius: 999px;
-}
-
-.episode-index { padding: 8px 22px 30px; }
-
-.index-label {
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 10px;
 }
 
 .episode-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
@@ -686,22 +654,6 @@ main { padding: 0 5vw 60px; }
 .auth-footer-links { justify-content: center; margin-top: 16px; }
 
 /* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 560px) {
-  .site-header { padding: 18px 5vw 14px; }
-  .brand-name { font-size: 22px; }
-  .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
-  .card-title { font-size: 15px; }
-}
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .card, .overlay, .drawer { animation: none !important; transition: none !important; }
-  .banner-slide { transition: none !important; }
-}
-
-/* ============================================================
    AUTH AREA (header) + AUTH PAGE
    ============================================================ */
 .auth-area {
@@ -713,7 +665,6 @@ main { padding: 0 5vw 60px; }
   flex-shrink: 0;
 }
 
-.auth-area .auth-user { color: var(--paper); }
 .auth-user-link {
   color: var(--paper);
   text-decoration: none;
@@ -986,17 +937,6 @@ body.auth-body {
 .banner-nav-next { bottom: calc(50% + 4px); }
 .banner-nav-prev { bottom: calc(50% - 42px); }
 
-@media (max-width: 720px) {
-  .banner { height: 72vh; min-height: 460px; }
-  .banner-meta-item:nth-child(3) { display: none; }
-}
-
-@media (max-width: 560px) {
-  .banner { height: 78vh; min-height: 480px; }
-  .banner-synopsis { display: none; }
-  .banner-nav { width: 32px; height: 32px; right: 12px; }
-}
-
 /* ============================================================
    CATEGORIES ROW
    ============================================================ */
@@ -1041,13 +981,6 @@ body.auth-body {
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .mylist-toggle.active { border-color: var(--pink); color: var(--pink); }
-
-.drawer-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
 
 .playlist-btn {
   flex-shrink: 0;
@@ -1222,7 +1155,6 @@ body.auth-body {
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-@media (max-width: 700px) { .profile-grid { grid-template-columns: 1fr; } }
 
 .profile-avatar-col {
   background: var(--panel-2);
@@ -1367,11 +1299,8 @@ body.auth-body {
 .password-modal-actions .confirm { background: var(--grad-brand); border: none; color: #fff; font-weight: 600; }
 .password-modal-actions .cancel { background: var(--panel-2); color: var(--paper); }
 
-/* History / Watch List lists */
-.history-list, .watchlist-grid {
-  display: grid;
-  gap: 12px;
-}
+/* Lists grids */
+.history-list, .watchlist-grid { display: grid; gap: 12px; }
 .history-list { grid-template-columns: 1fr; }
 .watchlist-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 
@@ -1423,4 +1352,211 @@ body.auth-body {
   font-size: 12.5px;
   text-align: center;
   padding: 30px 0;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card, .overlay, .drawer { animation: none !important; transition: none !important; }
+  .banner-slide { transition: none !important; }
+}
+
+/* ============================================================
+   MEDIA QUERIES — RESPONSIVE ENGINE
+   ============================================================ */
+
+/* --- TABLETS & LAPTOPS (Max-width: 1100px) --- */
+@media (max-width: 1100px) {
+  .watch-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .watch-episodes-col {
+    height: 400px; /* Constrain height on mobile/tablet rail to scroll nicely */
+    order: 3;
+    border-right: none;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .watch-center-col {
+    border-right: none;
+    order: 1;
+    padding: 16px;
+  }
+
+  .watch-info-col {
+    order: 2;
+    padding: 16px;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .watch-info-cover {
+    max-width: 160px;
+    float: left;
+    margin: 0 20px 16px 0;
+  }
+
+  .watch-share-row {
+    clear: both;
+  }
+}
+
+/* --- SMALL TABLETS & LARGE PHONES (Max-width: 980px) --- */
+@media (max-width: 980px) {
+  .catalog-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .sidebar-col {
+    order: 2;
+  }
+  
+  .profile-hero-back {
+    position: static;
+    display: block;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+}
+
+/* --- MEDIUM PHONES (Max-width: 720px) --- */
+@media (max-width: 720px) {
+  .site-header {
+    padding: 16px 4vw;
+  }
+
+  .banner {
+    height: 55vh;
+    min-height: 420px;
+  }
+
+  .banner-title {
+    font-size: 32px;
+  }
+
+  .banner-meta-item:nth-child(3) {
+    display: none; /* Hide minor meta tags if cramped */
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-avatar-col {
+    border-bottom: 1px solid var(--border-soft);
+    padding: 30px 20px;
+  }
+}
+
+/* --- COMPACT MOBILE PHONES (Max-width: 560px) --- */
+@media (max-width: 560px) {
+  .site-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px 4vw;
+  }
+
+  .brand {
+    justify-content: space-between;
+  }
+
+  .search-wrap {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .auth-area {
+    justify-content: center;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 10px;
+    width: 100%;
+  }
+
+  .banner {
+    height: auto;
+    min-height: auto;
+    padding: 40px 0;
+  }
+
+  .banner-slide {
+    position: relative;
+    opacity: 1;
+    display: block;
+    background-image: none !important; /* Save bandwith and avoid overlapping ugly stretched crops */
+  }
+
+  .banner-slide::before {
+    display: none;
+  }
+
+  .banner-copy {
+    max-width: 100%;
+    padding: 0 4vw;
+  }
+
+  .banner-synopsis {
+    display: none;
+  }
+
+  .banner-nav {
+    display: none; /* Disable carousel arrows on native mobile layout viewports */
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+  
+  .continue-card {
+    flex: 0 0 180px;
+  }
+
+  .profile-hero {
+    padding: 24px 4vw 0;
+  }
+
+  .profile-name {
+    font-size: 28px;
+  }
+
+  .profile-stats {
+    gap: 16px;
+    font-size: 12px;
+  }
+
+  .profile-tabs {
+    gap: 14px;
+  }
+
+  .profile-tab {
+    font-size: 13px;
+    padding: 8px 2px;
+  }
+
+  .profile-form {
+    padding: 20px 16px;
+  }
+
+  .watch-toolbar {
+    justify-content: space-between;
+  }
+
+  .watch-tool-note {
+    width: 100%;
+    order: 3;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .live-progress-time {
+    font-size: 10px;
+    min-width: 75px;
+  }
 }
