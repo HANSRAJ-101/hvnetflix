@@ -9,6 +9,7 @@ const grid = document.getElementById("grid");
 const resultCount = document.getElementById("resultCount");
 const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
+const searchDropdown = document.getElementById("searchDropdown");
 const authArea = document.getElementById("authArea");
 const mylistToggle = document.getElementById("mylistToggle");
 const categoryRow = document.getElementById("categoryRow");
@@ -835,11 +836,220 @@ if (shareBtn) {
   });
 }
 
-// ---------- search ----------
+// ---------- search: recent-searches + recommended + live suggestions ----------
+// No backend involved — this all runs off the catalog we already fetched
+// (lastCatalog) plus a small localStorage list of past search terms.
+const RECENT_SEARCHES_KEY = "aa_recent_searches";
+const MAX_RECENT_SEARCHES = 8;
+const MAX_SUGGESTIONS = 6;
+let activeDropdownIndex = -1;
+
+function getRecentSearches() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearch(term) {
+  term = (term || "").trim();
+  if (!term) return;
+  let list = getRecentSearches().filter((t) => t.toLowerCase() !== term.toLowerCase());
+  list.unshift(term);
+  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list.slice(0, MAX_RECENT_SEARCHES)));
+}
+
+function removeRecentSearch(term) {
+  const list = getRecentSearches().filter((t) => t !== term);
+  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(list));
+}
+
+function getTrending(limit = MAX_SUGGESTIONS) {
+  return [...lastCatalog].sort((a, b) => b.episodeCount - a.episodeCount).slice(0, limit);
+}
+
+function getMatches(query, limit = MAX_SUGGESTIONS) {
+  const q = query.toLowerCase();
+  return lastCatalog.filter((a) => a.title.toLowerCase().includes(q)).slice(0, limit);
+}
+
+function highlightMatch(text, query) {
+  if (!query) return escapeHtml(text);
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  return (
+    escapeHtml(text.slice(0, idx)) +
+    "<mark>" + escapeHtml(text.slice(idx, idx + query.length)) + "</mark>" +
+    escapeHtml(text.slice(idx + query.length))
+  );
+}
+
+function renderSuggestionRow(anime, query) {
+  return `
+    <button class="search-suggestion-item" data-id="${anime.id}">
+      <img class="search-suggestion-thumb" src="${escapeHtml(anime.cover)}" alt="" loading="lazy" />
+      <div class="search-suggestion-info">
+        <div class="search-suggestion-title">${highlightMatch(anime.title, query)}</div>
+        <div class="search-suggestion-sub mono">EP ${pad(anime.episodeCount)}${anime.tags && anime.tags[0] ? " · " + escapeHtml(anime.tags[0]) : ""}</div>
+      </div>
+    </button>
+  `;
+}
+
+function renderSearchDropdown() {
+  const query = searchInput.value.trim();
+  activeDropdownIndex = -1;
+  let html = "";
+
+  if (!query) {
+    const recents = getRecentSearches();
+    if (recents.length) {
+      html += `<div class="search-section-label mono">RECENT SEARCHES</div>`;
+      html += `<div class="search-recent-row">` +
+        recents
+          .map(
+            (term) => `
+              <span class="search-recent-chip" data-term="${escapeHtml(term)}">
+                <span class="search-recent-text">${escapeHtml(term)}</span>
+                <button class="search-recent-remove" data-term="${escapeHtml(term)}" aria-label="Remove">×</button>
+              </span>
+            `
+          )
+          .join("") +
+        `</div>`;
+    }
+
+    const trending = getTrending();
+    if (trending.length) {
+      html += `<div class="search-section-label mono">${recents.length ? "RECOMMENDED FOR YOU" : "POPULAR RIGHT NOW"}</div>`;
+      html += trending.map((a) => renderSuggestionRow(a, "")).join("");
+    }
+
+    if (!recents.length && !trending.length) {
+      html = `<div class="search-empty-hint mono">Start typing to search the catalog…</div>`;
+    }
+  } else {
+    const matches = getMatches(query);
+    if (matches.length) {
+      html += `<div class="search-section-label mono">MATCHES</div>`;
+      html += matches.map((a) => renderSuggestionRow(a, query)).join("");
+    } else {
+      html += `<div class="search-empty-hint mono">No quick matches — try “See all results” below.</div>`;
+    }
+    html += `<button class="search-see-all mono" data-action="search-all">⌕ See all results for “${escapeHtml(query)}”</button>`;
+  }
+
+  searchDropdown.innerHTML = html;
+  attachDropdownHandlers();
+}
+
+function attachDropdownHandlers() {
+  searchDropdown.querySelectorAll(".search-suggestion-item").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = Number(el.dataset.id);
+      const anime = lastCatalog.find((a) => a.id === id);
+      if (anime) saveRecentSearch(anime.title);
+      searchInput.value = "";
+      closeSearchDropdown();
+      loadCatalog("");
+      openAnime(id);
+    });
+  });
+
+  searchDropdown.querySelectorAll(".search-recent-text").forEach((el) => {
+    el.addEventListener("click", () => {
+      const term = el.parentElement.dataset.term;
+      searchInput.value = term;
+      loadCatalog(term);
+      renderSearchDropdown();
+      searchInput.focus();
+    });
+  });
+
+  searchDropdown.querySelectorAll(".search-recent-remove").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeRecentSearch(el.dataset.term);
+      renderSearchDropdown();
+    });
+  });
+
+  const seeAll = searchDropdown.querySelector('[data-action="search-all"]');
+  if (seeAll) {
+    seeAll.addEventListener("click", () => {
+      const term = searchInput.value.trim();
+      saveRecentSearch(term);
+      loadCatalog(term);
+      closeSearchDropdown();
+    });
+  }
+}
+
+function openSearchDropdown() {
+  renderSearchDropdown();
+  searchDropdown.classList.remove("hidden");
+}
+
+function closeSearchDropdown() {
+  searchDropdown.classList.add("hidden");
+}
+
+function getDropdownFocusableItems() {
+  return [...searchDropdown.querySelectorAll(".search-suggestion-item, .search-see-all")];
+}
+
+function updateActiveHighlight(items) {
+  items.forEach((el, i) => el.classList.toggle("active", i === activeDropdownIndex));
+  items[activeDropdownIndex]?.scrollIntoView({ block: "nearest" });
+}
+
+searchInput.addEventListener("focus", openSearchDropdown);
+
 searchInput.addEventListener("input", (e) => {
   clearTimeout(debounceTimer);
   const value = e.target.value.trim();
   debounceTimer = setTimeout(() => loadCatalog(value), 250);
+  renderSearchDropdown();
+  searchDropdown.classList.remove("hidden");
+});
+
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeSearchDropdown();
+    searchInput.blur();
+    return;
+  }
+
+  const items = getDropdownFocusableItems();
+  if (!items.length) return;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    activeDropdownIndex = Math.min(activeDropdownIndex + 1, items.length - 1);
+    updateActiveHighlight(items);
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    activeDropdownIndex = Math.max(activeDropdownIndex - 1, 0);
+    updateActiveHighlight(items);
+  } else if (e.key === "Enter") {
+    if (activeDropdownIndex >= 0 && items[activeDropdownIndex]) {
+      e.preventDefault();
+      items[activeDropdownIndex].click();
+    } else {
+      const term = searchInput.value.trim();
+      clearTimeout(debounceTimer);
+      if (term) {
+        saveRecentSearch(term);
+        loadCatalog(term);
+      }
+      closeSearchDropdown();
+    }
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".search-wrap")) closeSearchDropdown();
 });
 
 // ---------- init ----------
