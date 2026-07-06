@@ -57,7 +57,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--pink-dim); }
 
 /* ============================================================
-   HEADER
+   HEADER (Rolls out of view on scroll)
    ============================================================ */
 .site-header {
   display: flex;
@@ -66,12 +66,9 @@ body {
   gap: 24px;
   padding: 20px 5vw;
   border-bottom: 1px solid var(--border-soft);
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
-  background: rgba(10,10,16,0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--bg);
 }
 
 .brand { display: flex; align-items: center; gap: 12px; }
@@ -878,6 +875,7 @@ body.auth-body {
   margin-bottom: 22px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2; /* Unified unprefixed standard line-clamp parameter */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1372,7 +1370,7 @@ body.auth-body {
   }
 
   .watch-episodes-col {
-    height: 400px; /* Constrain height on mobile/tablet rail to scroll nicely */
+    height: 400px;
     order: 3;
     border-right: none;
     border-top: 1px solid var(--border-soft);
@@ -1437,7 +1435,7 @@ body.auth-body {
   }
 
   .banner-meta-item:nth-child(3) {
-    display: none; /* Hide minor meta tags if cramped */
+    display: none;
   }
 
   .profile-grid {
@@ -1475,17 +1473,22 @@ body.auth-body {
     width: 100%;
   }
 
+  /* Fixed Mobile Elastic Layout Block */
   .banner {
     height: auto;
     min-height: auto;
-    padding: 40px 0;
+    padding: 32px 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .banner-slide {
     position: relative;
-    opacity: 1;
-    display: block;
-    background-image: none !important; /* Save bandwith and avoid overlapping ugly stretched crops */
+    opacity: 1 !important;
+    display: flex;
+    align-items: center;
+    pointer-events: auto;
+    background-image: none !important;
   }
 
   .banner-slide::before {
@@ -1498,11 +1501,18 @@ body.auth-body {
   }
 
   .banner-synopsis {
-    display: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3; /* Unified unprefixed standard line-clamp parameter */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 16px;
+    font-size: 13px;
+    opacity: 0.7;
   }
 
   .banner-nav {
-    display: none; /* Disable carousel arrows on native mobile layout viewports */
+    display: none;
   }
 
   .grid {
