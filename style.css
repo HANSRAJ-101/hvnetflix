@@ -90,10 +90,10 @@ body {
 .brand-logo {
   width: auto;
   height: 100px;
-  border-radius: 11px;
+  /* border-radius: 0px; */
   object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 4px 18px var(--pink-glow);
+  /* box-shadow: 0 4px 18px var(--pink-glow); */
 }
 
 .brand-name {
