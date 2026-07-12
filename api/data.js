@@ -3,7 +3,7 @@
 // ------------------------------------------------------------
 // This is the "database" for the simple backend. Edit this file
 // to add your real anime + episodes. No build step needed —
-// just commit and push, Vercel redeploys automatically.  C
+// just commit and push, Vercel redeploys automatically.
 //
 // ------------------ ANIME ENTRY METADATA --------------------
 // banner            -> OPTIONAL. A direct high-resolution link to a 16:9
@@ -860,6 +860,185 @@ module.exports = [
         title: "Episode 12 (1080p)",
         type: "iframe",
         src: "https://bysedikamoum.com/e/hubqhlgw0ft7"
+      }
+    ]
+  }
+  ,
+  {
+    id: 30,
+    title: "The Angel Next Door Spoils Me Rotten",
+    cover: "https://image.tmdb.org/t/p/original/pjNFTabj2mXUGquE8Oj3buPeKvQ.jpg",
+    banner: "https://image.tmdb.org/t/p/original/pjNFTabj2mXUGquE8Oj3buPeKvQ.jpg",
+    synopsis: "Amane lives alone in an apartment, and the most beautiful girl in school, Mahiru, lives just next door. They’ve almost never spoken—until the day he sees her in distress on a rainy day and lends her his umbrella. To return the favour, she offers him help around the house, and a relationship slowly begins to blossom as the distance between them closes…",
+    tags: ["Animation", "Comedy", "Season 2", "Season 1"],
+    episodes: [
+      {
+        number: 1,
+        season: 1,
+        title: "Episode 01",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E01"
+      },
+      {
+        number: 2,
+        season: 1,
+        title: "Episode 02",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E02"
+      },
+      {
+        number: 3,
+        season: 1,
+        title: "Episode 03",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E03"
+      },
+      {
+        number: 4,
+        season: 1,
+        title: "Episode 04",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E04"
+      },
+      {
+        number: 5,
+        season: 1,
+        title: "Episode 05",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E05"
+      },
+      {
+        number: 6,
+        season: 1,
+        title: "Episode 06",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E06"
+      },
+      {
+        number: 7,
+        season: 1,
+        title: "Episode 07",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E07"
+      },
+      {
+        number: 8,
+        season: 1,
+        title: "Episode 08",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E08"
+      },
+      {
+        number: 9,
+        season: 1,
+        title: "Episode 09",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E09"
+      },
+      {
+        number: 10,
+        season: 1,
+        title: "Episode 10",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E10"
+      },
+      {
+        number: 11,
+        season: 1,
+        title: "Episode 11",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E11"
+      },
+      {
+        number: 12,
+        season: 1,
+        title: "Episode 12",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S1_E12"
+      },
+      {
+        number: 1,
+        season: 2,
+        title: "Episode 01",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E01"
+      },
+      {
+        number: 2,
+        season: 2,
+        title: "Episode 02",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E02"
+      },
+      {
+        number: 3,
+        season: 2,
+        title: "Episode 03",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E03"
+      },
+      {
+        number: 4,
+        season: 2,
+        title: "Episode 04",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E04"
+      },
+      {
+        number: 5,
+        season: 2,
+        title: "Episode 05",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E05"
+      },
+      {
+        number: 6,
+        season: 2,
+        title: "Episode 06",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E06"
+      },
+      {
+        number: 7,
+        season: 2,
+        title: "Episode 07",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E07"
+      },
+      {
+        number: 8,
+        season: 2,
+        title: "Episode 08",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E08"
+      },
+      {
+        number: 9,
+        season: 2,
+        title: "Episode 09",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E09"
+      },
+      {
+        number: 10,
+        season: 2,
+        title: "Episode 10",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E10"
+      },
+      {
+        number: 11,
+        season: 2,
+        title: "Episode 11",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E11"
+      },
+      {
+        number: 12,
+        season: 2,
+        title: "Episode 12",
+        type: "iframe",
+        src: "REPLACE_WITH_EMBED_URL_S2_E12"
       }
     ]
   }
