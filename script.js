@@ -26,6 +26,7 @@ const drawerTitle = document.getElementById("drawerTitle");
 const drawerSynopsis = document.getElementById("drawerSynopsis");
 const drawerTags = document.getElementById("drawerTags");
 const episodeList = document.getElementById("episodeList");
+const seasonTabs = document.getElementById("seasonTabs");
 const playlistBtn = document.getElementById("playlistBtn");
 const watchInfoCover = document.getElementById("watchInfoCover");
 const episodeFilter = document.getElementById("episodeFilter");
@@ -41,6 +42,11 @@ let lastCatalog = []; // cache of the full (unfiltered-by-search) summary list
 // so we know what "next episode" means when one finishes.
 let currentAnime = null;
 let currentEpisodeIndex = -1;
+
+// Which season is currently selected in the episode rail. Episodes without
+// an explicit `season` field on them (in data.js) are treated as season 1,
+// so this feature is fully backwards-compatible with existing entries.
+let currentSeason = 1;
 
 // Tracks when the current iframe episode's timer should fire (wall-clock
 // timestamp in ms), so we can recover correctly even if the browser
@@ -383,8 +389,92 @@ function renderDrawer(anime) {
   removeDynamicPlayerControls();
   renderPlaylistButton(anime.id);
 
+  // Figure out which season to land on: whichever season the viewer's
+  // saved progress episode belongs to, otherwise the first season.
+  const user = currentUser();
+  const saved = user ? AA.getProgress(user, anime.id) : null;
+  const savedEpisode =
+    saved && saved.episodeIndex != null ? anime.episodes[saved.episodeIndex] : null;
+  currentSeason = savedEpisode ? getEpisodeSeason(savedEpisode) : getSeasonList(anime)[0] || 1;
+
+  renderSeasonTabs(anime);
+  renderEpisodeItems(anime);
+
+  // Resume where the user left off, if we have a saved position for
+  // this anime and it falls within the currently shown season;
+  // otherwise auto-start the first episode of that season.
+  if (anime.episodes.length) {
+    const startIndex =
+      saved &&
+      saved.episodeIndex != null &&
+      anime.episodes[saved.episodeIndex] &&
+      getEpisodeSeason(anime.episodes[saved.episodeIndex]) === currentSeason
+        ? saved.episodeIndex
+        : firstEpisodeIndexForSeason(anime, currentSeason);
+    if (startIndex !== -1) selectEpisode(startIndex);
+  }
+}
+
+// ---------------- seasons ----------------
+// An episode with no explicit `season` field (older/simple data.js
+// entries) is treated as belonging to season 1.
+function getEpisodeSeason(ep) {
+  return ep && ep.season ? Number(ep.season) : 1;
+}
+
+function getSeasonList(anime) {
+  const seasons = new Set(anime.episodes.map(getEpisodeSeason));
+  return [...seasons].sort((a, b) => a - b);
+}
+
+function firstEpisodeIndexForSeason(anime, season) {
+  return anime.episodes.findIndex((ep) => getEpisodeSeason(ep) === season);
+}
+
+// Renders the Season 1 / Season 2 / … pill buttons. Hidden entirely when
+// a title only has a single season, so nothing changes for existing
+// single-season entries in data.js.
+function renderSeasonTabs(anime) {
+  const seasons = getSeasonList(anime);
+
+  if (seasons.length <= 1) {
+    seasonTabs.innerHTML = "";
+    seasonTabs.classList.add("hidden");
+    return;
+  }
+
+  seasonTabs.classList.remove("hidden");
+  seasonTabs.innerHTML = seasons
+    .map(
+      (s) =>
+        `<button class="season-tab${s === currentSeason ? " active" : ""}" data-season="${s}">SEASON ${s}</button>`
+    )
+    .join("");
+
+  seasonTabs.querySelectorAll(".season-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const season = Number(btn.dataset.season);
+      if (season === currentSeason) return;
+      currentSeason = season;
+      seasonTabs.querySelectorAll(".season-tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (episodeFilter) episodeFilter.value = "";
+      renderEpisodeItems(currentAnime);
+      // Automatically jump straight into that season's first episode.
+      const startIndex = firstEpisodeIndexForSeason(currentAnime, currentSeason);
+      if (startIndex !== -1) selectEpisode(startIndex);
+    });
+  });
+}
+
+// Builds the episode rail list, filtered down to whatever `currentSeason`
+// is active. Each button still carries the episode's real index into
+// `anime.episodes`, so selectEpisode()/progress-tracking are unaffected.
+function renderEpisodeItems(anime) {
   episodeList.innerHTML = "";
   anime.episodes.forEach((ep, index) => {
+    if (getEpisodeSeason(ep) !== currentSeason) return;
+
     const li = document.createElement("li");
     const btn = document.createElement("button");
     btn.className = "episode-item";
@@ -397,16 +487,30 @@ function renderDrawer(anime) {
     episodeList.appendChild(li);
   });
 
-  // Resume where the user left off, if we have a saved position for
-  // this anime; otherwise start from episode 1.
-  if (anime.episodes.length) {
-    const user = currentUser();
-    const saved = user ? AA.getProgress(user, anime.id) : null;
-    const startIndex =
-      saved && saved.episodeIndex != null && anime.episodes[saved.episodeIndex]
-        ? saved.episodeIndex
-        : 0;
-    selectEpisode(startIndex);
+  if (currentEpisodeIndex >= 0) highlightActiveEpisode();
+}
+
+// Re-applies the "active" highlight to whichever episode button matches
+// currentEpisodeIndex (used after rebuilding the list on a season switch).
+function highlightActiveEpisode() {
+  episodeList.querySelectorAll(".episode-item").forEach((el) => el.classList.remove("active"));
+  const items = [...episodeList.querySelectorAll(".episode-item")];
+  const anime = currentAnime;
+  if (!anime) return;
+  const target = anime.episodes[currentEpisodeIndex];
+  if (!target) return;
+  // Match by position within the currently rendered (season-filtered) list.
+  let renderedIndex = -1;
+  let counter = -1;
+  anime.episodes.forEach((ep, idx) => {
+    if (getEpisodeSeason(ep) !== currentSeason) return;
+    counter++;
+    if (idx === currentEpisodeIndex) renderedIndex = counter;
+  });
+  const activeBtn = items[renderedIndex];
+  if (activeBtn) {
+    activeBtn.classList.add("active");
+    activeBtn.scrollIntoView({ block: "nearest" });
   }
 }
 
@@ -437,13 +541,17 @@ function selectEpisode(index) {
 
   currentEpisodeIndex = index;
 
-  const items = episodeList.querySelectorAll(".episode-item");
-  items.forEach(el => el.classList.remove("active"));
-  const activeBtn = items[index];
-  if (activeBtn) {
-    activeBtn.classList.add("active");
-    activeBtn.scrollIntoView({ block: "nearest" });
+  // If this episode belongs to a different season than the one currently
+  // shown (e.g. auto-advance rolling from Season 1's finale into Season 2,
+  // or a deep link), switch the rail over to that season automatically.
+  const targetSeason = getEpisodeSeason(currentAnime.episodes[index]);
+  if (targetSeason !== currentSeason) {
+    currentSeason = targetSeason;
+    renderSeasonTabs(currentAnime);
+    renderEpisodeItems(currentAnime);
   }
+
+  highlightActiveEpisode();
 
   loadPlayer(currentAnime.episodes[index]);
   persistEpisodeStart(currentAnime.episodes[index]);

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support the Archive — Donate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<style>
+  /* ============================================================
+     DONATE PAGE — page-specific styles
+     Reuses the :root variables already defined in style.css
+     ============================================================ */
+
+  body.donate-body {
+    overflow-x: hidden;
+  }
+
+  /* ---------------- floating background glow ---------------- */
+  .donate-glow {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .donate-glow span {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.35;
+    animation: float-blob 16s ease-in-out infinite;
+  }
+  .donate-glow span:nth-child(1) {
+    width: 420px; height: 420px;
+    background: var(--pink);
+    top: -120px; left: -80px;
+    animation-delay: 0s;
+  }
+  .donate-glow span:nth-child(2) {
+    width: 460px; height: 460px;
+    background: var(--purple);
+    top: 30%; right: -140px;
+    animation-delay: -5s;
+  }
+  .donate-glow span:nth-child(3) {
+    width: 340px; height: 340px;
+    background: var(--violet);
+    bottom: -100px; left: 30%;
+    animation-delay: -10s;
+  }
+  @keyframes float-blob {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -40px) scale(1.08); }
+    66% { transform: translate(-25px, 25px) scale(0.95); }
+  }
+
+  /* ---------------- nav pill (active state) ---------------- */
+  .donate-nav-btn {
+    background: var(--grad-brand) !important;
+    color: #fff !important;
+    border: none !important;
+  }
+
+  /* ---------------- hero ---------------- */
+  .donate-hero {
+    text-align: center;
+    padding: 70px 5vw 40px;
+    position: relative;
+  }
+
+  .donate-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--violet);
+    background: rgba(139,92,246,0.12);
+    border: 1px solid var(--purple-dim);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+    animation: pulse-badge 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.35); }
+    50% { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+  }
+
+  .donate-title {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 7vw, 76px);
+    line-height: 1.02;
+    letter-spacing: 0.01em;
+    background: linear-gradient(120deg, #fff 30%, var(--pink) 55%, var(--purple) 75%, var(--violet) 95%);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer-title 6s linear infinite;
+  }
+  @keyframes shimmer-title {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+
+  .donate-subtitle {
+    max-width: 620px;
+    margin: 18px auto 0;
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+
+  /* ---------------- stat counters ---------------- */
+  .donate-stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 38px auto 0;
+    max-width: 700px;
+  }
+  .donate-stat {
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 20px 28px;
+    min-width: 160px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .donate-stat::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--grad-hero);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .donate-stat:hover { transform: translateY(-4px); border-color: var(--pink-dim); }
+  .donate-stat:hover::before { opacity: 1; }
+  .donate-stat-num {
+    font-family: var(--font-display);
+    font-size: 34px;
+    background: var(--grad-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    position: relative;
+  }
+  .donate-stat-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+    position: relative;
+  }
+
+  /* ---------------- payment section ---------------- */
+  .donate-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 5vw;
+  }
+
+  .donate-section-head {
+    text-align: center;
+    margin-bottom: 34px;
+  }
+  .donate-section-title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    letter-spacing: 0.01em;
+  }
+  .donate-section-sub {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin-top: 6px;
+  }
+
+  .donate-pay-card {
+    max-width: 460px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 34px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 30px 70px -40px rgba(251,44,110,0.35);
+  }
+  .donate-pay-card::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: var(--radius-lg);
+    padding: 2px;
+    background: var(--grad-brand);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    animation: border-spin 4s linear infinite;
+  }
+  @keyframes border-spin {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.75; }
+  }
+
+  .donate-pay-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--pink);
+    background: rgba(251,44,110,0.1);
+    border: 1px solid var(--pink-dim);
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+
+  .donate-qr-wrap {
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 20px;
+    background: #fff;
+    border-radius: var(--radius-md);
+    padding: 10px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 0 1px var(--border-soft), 0 20px 50px -20px var(--pink-glow);
+  }
+  .donate-qr-wrap img { width: 100%; height: 100%; object-fit: contain; }
+
+  .donate-upi-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.01em;
+  }
+
+  .donate-upi-id-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 10px 10px 18px;
+  }
+  .donate-upi-id {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--paper);
+  }
+  .donate-copy-btn {
+    background: var(--grad-brand);
+    border: none;
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+  }
+  .donate-copy-btn:hover { filter: brightness(1.1); }
+  .donate-copy-btn:active { transform: scale(0.96); }
+  .donate-copy-btn.copied { background: linear-gradient(135deg, #22c55e, #16a34a); }
+
+  .donate-pay-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 18px;
+    background: var(--grad-brand);
+    border: none;
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 15px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    box-shadow: 0 14px 34px -14px var(--pink-glow);
+    transition: filter 0.15s ease, transform 0.15s ease;
+    animation: pay-btn-pulse 2.6s ease-in-out infinite;
+  }
+  .donate-pay-btn:hover { filter: brightness(1.08); }
+  .donate-pay-btn:active { transform: scale(0.98); }
+  @keyframes pay-btn-pulse {
+    0%, 100% { box-shadow: 0 14px 34px -14px var(--pink-glow); }
+    50% { box-shadow: 0 14px 40px -10px var(--pink-glow); }
+  }
+  .donate-pay-btn-note {
+    margin-top: 10px;
+    color: var(--muted-dim);
+    font-size: 11px;
+    font-family: var(--font-mono);
+  }
+
+  .donate-pay-note {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  .donate-app-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .donate-app-chip {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 5px 11px;
+    border-radius: 999px;
+  }
+
+  /* ---------------- leaderboard ---------------- */
+  .donors-podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .donor-podium-card {
+    width: 160px;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 22px 14px 18px;
+    text-align: center;
+    position: relative;
+    opacity: 0;
+    transform: translateY(18px);
+    animation: donor-in 0.5s ease forwards;
+  }
+  .donor-podium-card.rank-1 {
+    order: 2;
+    padding-top: 32px;
+    border-color: var(--pink-dim);
+    box-shadow: 0 20px 50px -25px var(--pink-glow);
+    background: linear-gradient(180deg, rgba(251,44,110,0.12), var(--panel));
+  }
+  .donor-podium-card.rank-2 { order: 1; }
+  .donor-podium-card.rank-3 { order: 3; }
+  @keyframes donor-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .donor-medal { font-size: 30px; display: block; margin-bottom: 8px; }
+  .donor-podium-card.rank-1 .donor-medal { font-size: 40px; }
+  .donor-podium-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: #fff;
+    background: var(--grad-brand);
+  }
+  .donor-podium-name {
+    font-family: var(--font-display);
+    font-size: 17px;
+    letter-spacing: 0.01em;
+    word-break: break-word;
+  }
+  .donor-podium-amount {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--violet);
+    margin-top: 4px;
+  }
+
+  .donors-list {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .donor-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    opacity: 0;
+    transform: translateX(-12px);
+    animation: donor-row-in 0.4s ease forwards;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .donor-row:hover { border-color: var(--pink-dim); transform: translateX(2px); }
+  @keyframes donor-row-in {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .donor-rank {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted-dim);
+    width: 24px;
+    flex-shrink: 0;
+  }
+  .donor-row-name {
+    flex: 1;
+    font-weight: 500;
+    font-size: 14.5px;
+  }
+  .donor-row-amount {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--pink);
+    font-weight: 600;
+  }
+
+  .donors-empty {
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 30px 0;
+  }
+
+  /* ---------------- why donate ---------------- */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .why-card {
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .why-card:hover { transform: translateY(-4px); border-color: var(--purple-dim); }
+  .why-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+  .why-title { font-family: var(--font-display); font-size: 17px; margin-bottom: 6px; }
+  .why-text { color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+  /* ---------------- toast + confetti ---------------- */
+  .donate-toast {
+    position: fixed;
+    bottom: 26px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel);
+    border: 1px solid var(--pink-dim);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 90;
+  }
+  .donate-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .confetti-piece {
+    position: fixed;
+    top: -10px;
+    width: 8px;
+    height: 14px;
+    z-index: 95;
+    pointer-events: none;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    to {
+      transform: translateY(105vh) rotate(540deg);
+      opacity: 0.4;
+    }
+  }
+</style>
+</head>
+<body class="donate-body">
+
+  <div class="donate-glow"><span></span><span></span><span></span></div>
+
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+        <img class="brand-logo" src="https://i.postimg.cc/y8RTNP56/Hindi-Anime-world.png" alt="Anime Archive logo" style="height:48px;" />
+        <h1 class="brand-name">HINDI <span>ANIME</span> WORLD</h1>
+      </a>
+    </div>
+    <div class="auth-area mono">
+      <a href="index.html" class="auth-btn">← CATALOG</a>
+      <a href="donate.html" class="auth-btn donate-nav-btn">❤ DONATE</a>
+    </div>
+  </header>
+
+  <section class="donate-hero">
+    <span class="donate-kicker">✦ KEEP THE ARCHIVE ALIVE ✦</span>
+    <h1 class="donate-title">SUPPORT THE<br />ARCHIVE</h1>
+    <p class="donate-subtitle">
+      This site runs on hosting bills, bandwidth, and late nights — not ads, not tracking.
+      If it's been useful to you, a small donation goes a long way toward keeping it free for everyone.
+    </p>
+
+    <div class="donate-stats">
+      <div class="donate-stat">
+        <div class="donate-stat-num" data-count-to="48250" data-prefix="₹">₹0</div>
+        <div class="donate-stat-label">TOTAL RAISED</div>
+      </div>
+      <div class="donate-stat">
+        <div class="donate-stat-num" data-count-to="112">0</div>
+        <div class="donate-stat-label">TOTAL DONORS</div>
+      </div>
+      <div class="donate-stat">
+        <div class="donate-stat-num" data-count-to="100">0</div>
+        <div class="donate-stat-label">% GOES TO SERVER COSTS</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="donate-section">
+    <div class="donate-section-head">
+      <h2 class="donate-section-title">SCAN & PAY</h2>
+      <p class="donate-section-sub">Any UPI app works — just scan or copy the ID below.</p>
+    </div>
+
+    <div class="donate-pay-card">
+      <span class="donate-pay-badge">UPI · INDIA</span>
+      <div class="donate-qr-wrap">
+        <img id="upiQr" src="" alt="UPI QR code" />
+      </div>
+      <div class="donate-upi-name" id="upiPayeeName">Hindi Anime World</div>
+
+      <div class="donate-upi-id-row">
+        <span class="donate-upi-id" id="upiIdText">your-upi-id@bank</span>
+        <button class="donate-copy-btn" id="copyUpiBtn">COPY</button>
+      </div>
+
+      <button class="donate-pay-btn" id="payNowBtn">📲 PAY NOW — OPEN UPI APP</button>
+      <p class="donate-pay-btn-note">Automatically opens Google Pay / PhonePe / Paytm on your phone. On a computer, scan the QR instead.</p>
+
+      <div class="donate-app-row">
+        <span class="donate-app-chip">Google Pay</span>
+        <span class="donate-app-chip">PhonePe</span>
+        <span class="donate-app-chip">Paytm</span>
+        <span class="donate-app-chip">BHIM</span>
+        <span class="donate-app-chip">Any UPI app</span>
+      </div>
+
+      <p class="donate-pay-note">Every rupee helps — no minimum, no pressure. Thank you 🙏</p>
+    </div>
+  </section>
+
+  <section class="donate-section">
+    <div class="donate-section-head">
+      <h2 class="donate-section-title">🏆 TOP DONORS</h2>
+      <p class="donate-section-sub">Updated by hand whenever a new donation comes in — thank you to everyone on this list.</p>
+    </div>
+
+    <div id="donorsPodium" class="donors-podium"></div>
+    <div id="donorsList" class="donors-list"></div>
+  </section>
+
+  <section class="donate-section">
+    <div class="donate-section-head">
+      <h2 class="donate-section-title">WHERE IT GOES</h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-card">
+        <span class="why-icon">🖥️</span>
+        <div class="why-title">Hosting & Bandwidth</div>
+        <div class="why-text">Keeps the catalog fast and online for every visitor, every day.</div>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">🚫</span>
+        <div class="why-title">No Ads, Ever</div>
+        <div class="why-text">Donations are the only reason this site doesn't need to sell ad space.</div>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">🛠️</span>
+        <div class="why-title">New Features</div>
+        <div class="why-text">Continue Watching, playlists, and everything still to come.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-links mono">
+      <a href="https://discord.gg/NVFeE5ygF2" target="_blank" rel="noopener noreferrer">💬 Support Discord</a>
+      <a href="mailto:hnsrjsih4@gmail.com">✉ hnsrjsih4@gmail.com</a>
+    </div>
+    <p class="mono" style="margin-top: 15px;">
+      Copyright &copy; <span id="year"></span> | Developed by
+      <strong>HANSRAJ SINH VAGHELA</strong> and <strong>Professor</strong>
+    </p>
+  </footer>
+
+  <div id="donateToast" class="donate-toast mono"></div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ============================================================
+    // ⚙️  EDIT THIS CONFIG — everything on the page pulls from here
+    // ============================================================
+    const DONATE_CONFIG = {
+      upiId: "hindianimeworld@upi",     // <-- your real UPI ID (shown as text under the QR)
+      payeeName: "Hindi Anime World",       // <-- name shown to the payer
+      totalRaised: 811,                   // <-- update by hand, shown in the counter (₹)
+      totalDonors: 10,                     // <-- update by hand
+      qrImageUrl: "https://i.postimg.cc/ZR9VW4Ly/hindianimeworld-upi.jpg" // <-- your real UPI QR image (leave blank "" to auto-generate one from upiId instead)
+    };
+
+    // Top donors — edit this list by hand whenever someone donates.
+    // Sorted automatically by amount, highest first. Max 10 shown.
+    const DONORS = [
+      { name: "Rohan Mehta", amount: 200 },
+      { name: "Ayesha Khan", amount: 186 },
+      { name: "Sam", amount: 150 },
+      { name: "Priya Sharma", amount: 100 },
+      { name: "Dev Patel", amount: 70 },
+      { name: "Anonymous", amount: 50 },
+      { name: "Kavya", amount: 30 },
+      { name: "Arjun Rao", amount: 10 },
+      { name: "Neha", amount: 10 },
+      { name: "Vikram Singh", amount: 5 }
+    ];
+
+    // ============================================================
+    // UPI QR + copy button
+    // ============================================================
+    const upiUri = `upi://pay?pa=${encodeURIComponent(DONATE_CONFIG.upiId)}&pn=${encodeURIComponent(DONATE_CONFIG.payeeName)}&cu=INR`;
+    document.getElementById("upiQr").src = DONATE_CONFIG.qrImageUrl
+      ? DONATE_CONFIG.qrImageUrl
+      : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(upiUri)}`;
+    document.getElementById("upiPayeeName").textContent = DONATE_CONFIG.payeeName;
+    document.getElementById("upiIdText").textContent = DONATE_CONFIG.upiId;
+
+    document.getElementById("payNowBtn").addEventListener("click", () => {
+      // Always attempt the upi:// deep link. On a phone with a UPI app installed,
+      // the OS intercepts this and opens the app directly. On desktop (or a phone
+      // with no UPI app), nothing catches it — so if the page is still visible
+      // after a moment, we show a fallback pointing to the QR code instead.
+      const fallback = setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          showToast("No UPI app opened — scan the QR code instead 👆");
+        }
+      }, 1500);
+      window.addEventListener(
+        "visibilitychange",
+        () => clearTimeout(fallback),
+        { once: true }
+      );
+      window.location.href = upiUri;
+    });
+
+    const copyBtn = document.getElementById("copyUpiBtn");
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(DONATE_CONFIG.upiId);
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = DONATE_CONFIG.upiId;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      copyBtn.textContent = "COPIED ✓";
+      copyBtn.classList.add("copied");
+      showToast("UPI ID copied — paste it in your payment app 💫");
+      burstConfetti();
+      setTimeout(() => {
+        copyBtn.textContent = "COPY";
+        copyBtn.classList.remove("copied");
+      }, 2000);
+    });
+
+    // ============================================================
+    // Animated stat counters (count up when scrolled into view)
+    // ============================================================
+    function animateCount(el) {
+      const target = Number(el.dataset.countTo || 0);
+      const prefix = el.dataset.prefix || "";
+      const duration = 1400;
+      const start = performance.now();
+      function tick(now) {
+        const p = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = Math.round(target * eased);
+        el.textContent = prefix + val.toLocaleString("en-IN");
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    document.querySelector('[data-count-to="48250"]').dataset.countTo = DONATE_CONFIG.totalRaised;
+    document.querySelectorAll(".donate-stat-num")[1].dataset.countTo = DONATE_CONFIG.totalDonors;
+
+    const statObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          animateCount(entry.target);
+          statObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    document.querySelectorAll(".donate-stat-num").forEach((el) => statObserver.observe(el));
+
+    // ============================================================
+    // Top donors leaderboard
+    // ============================================================
+    function initials(name) {
+      return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    }
+    function escapeHtml(str = "") {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function renderDonors() {
+      const sorted = [...DONORS].sort((a, b) => b.amount - a.amount).slice(0, 10);
+      const podiumEl = document.getElementById("donorsPodium");
+      const listEl = document.getElementById("donorsList");
+
+      if (!sorted.length) {
+        podiumEl.innerHTML = "";
+        listEl.innerHTML = `<p class="donors-empty">No donations yet — be the first name on this list! 🎉</p>`;
+        return;
+      }
+
+      const medals = ["🥇", "🥈", "🥉"];
+      const top3 = sorted.slice(0, 3);
+      podiumEl.innerHTML = top3
+        .map((d, i) => `
+          <div class="donor-podium-card rank-${i + 1}" style="animation-delay:${i * 0.12}s">
+            <span class="donor-medal">${medals[i]}</span>
+            <div class="donor-podium-avatar">${escapeHtml(initials(d.name))}</div>
+            <div class="donor-podium-name">${escapeHtml(d.name)}</div>
+            <div class="donor-podium-amount">₹${d.amount.toLocaleString("en-IN")}</div>
+          </div>
+        `)
+        .join("");
+
+      const rest = sorted.slice(3);
+      listEl.innerHTML = rest
+        .map((d, i) => `
+          <div class="donor-row" style="animation-delay:${i * 0.06}s">
+            <span class="donor-rank">#${i + 4}</span>
+            <span class="donor-row-name">${escapeHtml(d.name)}</span>
+            <span class="donor-row-amount">₹${d.amount.toLocaleString("en-IN")}</span>
+          </div>
+        `)
+        .join("");
+    }
+    renderDonors();
+
+    // ============================================================
+    // Toast + confetti helpers
+    // ============================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById("donateToast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function burstConfetti() {
+      const colors = ["#fb2c6e", "#8b5cf6", "#c084fc", "#f472b6", "#a78bfa"];
+      const count = 60;
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDuration = 2 + Math.random() * 1.5 + "s";
+        piece.style.opacity = 0.7 + Math.random() * 0.3;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3600);
+      }
+    }
+  </script>
+</body>
+</html>

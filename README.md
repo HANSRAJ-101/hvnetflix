@@ -124,3 +124,9 @@ The video itself is **never proxied through your backend** — the browser loads
 - **Top banner** — an auto-sliding banner (2s interval, click-to-open, clickable dots) featuring the latest and most-episode-heavy titles from the catalog.
 
 Browsing the catalog still works without an account — signing in only unlocks My List and Continue Watching.
+
+## New: multi-season titles
+
+Give an episode a `season` number in `api/data.js` (see the comment block above the data array for an example). Episodes with no `season` field default to Season 1, so nothing changes for existing entries.
+
+Once a title has 2+ distinct season numbers, its episode page automatically shows "SEASON 1 / SEASON 2 / …" tabs above the episode list. Switching tabs filters the list to that season and auto-plays its first episode — no extra wiring needed per title.

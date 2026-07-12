@@ -547,6 +547,35 @@ main { padding: 0 5vw 60px; }
 }
 .episode-filter:focus { outline: none; border-color: var(--pink-dim); }
 
+/* ---------------- season selector (episode rail) ---------------- */
+.season-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.season-tabs.hidden { display: none; }
+
+.season-tab {
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.season-tab:hover { border-color: var(--pink-dim); color: var(--paper); }
+.season-tab.active {
+  border-color: transparent;
+  color: #fff;
+  background: var(--grad-brand);
+  font-weight: 600;
+}
+
 .watch-center-col {
   padding: 20px 22px 40px;
   border-right: 1px solid var(--border-soft);
