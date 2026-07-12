@@ -3,7 +3,7 @@
 // ------------------------------------------------------------
 // This is the "database" for the simple backend. Edit this file
 // to add your real anime + episodes. No build step needed —
-// just commit and push, Vercel redeploys automatically.
+// just commit and push, Vercel redeploys automatically.  C
 //
 // ------------------ ANIME ENTRY METADATA --------------------
 // banner            -> OPTIONAL. A direct high-resolution link to a 16:9
