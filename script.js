@@ -234,10 +234,21 @@ mylistToggle.addEventListener("click", () => {
 });
 
 // ---------- top sliding banner ----------
+// Infinite drag-able sliding track. The DOM is built exactly once per
+// catalog load; every subsequent slide change is just a transform on
+// the track, so images never re-decode and listeners never rebind.
 let bannerSlides = [];
-let bannerIndex = 0;
+let bannerRealIndex = 0; // 0-based index into bannerSlides (the "real" slide showing)
+let bannerTrackIndex = 1; // index into the DOM track, offset by +1 for the leading clone
 let bannerTimer = null;
-const BANNER_INTERVAL_MS = 2000;
+let bannerTrackEl = null;
+let bannerDotsEl = null;
+let bannerDragging = false;
+let bannerDragStartX = 0;
+let bannerDragStartTx = 0;
+let bannerWidth = 0;
+const BANNER_INTERVAL_MS = 5000;
+const BANNER_TRANSITION_MS = 700;
 
 function initBanner(list) {
   // Feature up to 5 titles — furthest along in the catalog order counts
@@ -254,67 +265,194 @@ function initBanner(list) {
   });
 
   bannerSlides = merged;
-  bannerIndex = 0;
-  renderBanner();
+  bannerRealIndex = 0;
+  bannerTrackIndex = 1;
+  buildBanner();
   startBannerAutoplay();
 }
 
-function renderBanner() {
+function bannerSlideMarkup(a, displayNum) {
+  return `
+    <div class="banner-slide">
+      <div class="banner-slide-bg" style="background-image:url('${escapeHtml(a.cover)}')"></div>
+      <div class="banner-copy">
+        <span class="banner-eyebrow mono">#${displayNum} SPOTLIGHT</span>
+        <h2 class="banner-title">${escapeHtml(a.title)}</h2>
+        <div class="banner-meta mono">
+          <span class="banner-meta-item">📺 SERIES</span>
+          <span class="banner-meta-item">🕐 ${pad(a.episodeCount)} EP</span>
+          ${a.tags && a.tags[0] ? `<span class="banner-badge">${escapeHtml(a.tags[0])}</span>` : ""}
+        </div>
+        <p class="banner-synopsis">${escapeHtml(a.synopsis || "")}</p>
+        <div class="banner-actions">
+          <button class="banner-watch-btn" data-id="${a.id}">▶ Watch Now</button>
+          <button class="banner-detail-btn" data-id="${a.id}">Detail ›</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildBanner() {
   if (!bannerSlides.length) {
     bannerEl.classList.add("hidden");
     return;
   }
   bannerEl.classList.remove("hidden");
 
-  bannerEl.innerHTML =
-    bannerSlides
-      .map(
-        (a, i) => `
-      <div class="banner-slide${i === bannerIndex ? " active" : ""}" style="background-image:url('${escapeHtml(a.cover)}')">
-        <div class="banner-copy">
-          <span class="banner-eyebrow mono">#${i + 1} SPOTLIGHT</span>
-          <h2 class="banner-title">${escapeHtml(a.title)}</h2>
-          <div class="banner-meta mono">
-            <span class="banner-meta-item">📺 SERIES</span>
-            <span class="banner-meta-item">🕐 ${pad(a.episodeCount)} EP</span>
-            ${a.tags && a.tags[0] ? `<span class="banner-badge">${escapeHtml(a.tags[0])}</span>` : ""}
-          </div>
-          <p class="banner-synopsis">${escapeHtml(a.synopsis || "")}</p>
-          <div class="banner-actions">
-            <button class="banner-watch-btn" data-id="${a.id}">▶ Watch Now</button>
-            <button class="banner-detail-btn" data-id="${a.id}">Detail ›</button>
-          </div>
-        </div>
-      </div>`
-      )
-      .join("") +
-    `<button class="banner-nav banner-nav-next" aria-label="Next">›</button>
-     <button class="banner-nav banner-nav-prev" aria-label="Previous">‹</button>`;
+  const n = bannerSlides.length;
+  // Clone-first/clone-last trick gives a seamless infinite loop:
+  // [clone of last] [slide 0] [slide 1] ... [slide n-1] [clone of first]
+  const slidesHtml =
+    bannerSlideMarkup(bannerSlides[n - 1], n) +
+    bannerSlides.map((a, i) => bannerSlideMarkup(a, i + 1)).join("") +
+    bannerSlideMarkup(bannerSlides[0], 1);
+
+  const dotsHtml =
+    n > 1
+      ? `<div class="banner-dots">${bannerSlides.map((_, i) => `<button class="banner-dot" data-i="${i}" aria-label="Go to slide ${i + 1}"></button>`).join("")}</div>`
+      : "";
+
+  bannerEl.innerHTML = `
+    <div class="banner-track">${slidesHtml}</div>
+    ${dotsHtml}
+    <button class="banner-nav banner-nav-next" aria-label="Next">›</button>
+    <button class="banner-nav banner-nav-prev" aria-label="Previous">‹</button>
+  `;
+
+  bannerTrackEl = bannerEl.querySelector(".banner-track");
+  bannerDotsEl = bannerEl.querySelector(".banner-dots");
+  bannerWidth = bannerEl.getBoundingClientRect().width;
 
   bannerEl.querySelectorAll(".banner-watch-btn, .banner-detail-btn").forEach((el) => {
     el.addEventListener("click", () => openAnime(Number(el.dataset.id)));
   });
   bannerEl.querySelector(".banner-nav-next").addEventListener("click", () => {
-    goToBannerSlide(bannerIndex + 1);
-    startBannerAutoplay();
+    stepBanner(1);
+    restartBannerAutoplay();
   });
   bannerEl.querySelector(".banner-nav-prev").addEventListener("click", () => {
-    goToBannerSlide(bannerIndex - 1);
-    startBannerAutoplay();
+    stepBanner(-1);
+    restartBannerAutoplay();
+  });
+  if (bannerDotsEl) {
+    bannerDotsEl.querySelectorAll(".banner-dot").forEach((dot) => {
+      dot.addEventListener("click", () => {
+        const target = Number(dot.dataset.i);
+        const delta = target - bannerRealIndex;
+        // shortest wrap direction, purely cosmetic for the animation
+        const n2 = bannerSlides.length;
+        const forward = ((delta % n2) + n2) % n2;
+        const backward = n2 - forward;
+        stepBanner(forward <= backward ? forward || n2 : -backward);
+        restartBannerAutoplay();
+      });
+    });
+  }
+
+  bannerTrackEl.addEventListener("transitionend", onBannerTransitionEnd);
+
+  // Pause on hover/focus so the copy is readable, resume on leave.
+  bannerEl.addEventListener("mouseenter", stopBannerAutoplay);
+  bannerEl.addEventListener("mouseleave", startBannerAutoplay);
+
+  // Drag / swipe support (mouse + touch via Pointer Events).
+  bannerTrackEl.addEventListener("pointerdown", onBannerPointerDown);
+  window.addEventListener("resize", () => {
+    bannerWidth = bannerEl.getBoundingClientRect().width;
+  });
+
+  setBannerTrackPosition(false);
+  updateBannerDots();
+}
+
+function setBannerTrackPosition(animate) {
+  bannerTrackEl.style.transition = animate
+    ? `transform ${BANNER_TRANSITION_MS}ms cubic-bezier(.65,.05,.36,1)`
+    : "none";
+  bannerTrackEl.style.transform = `translateX(${-bannerTrackIndex * 100}%)`;
+}
+
+function updateBannerDots() {
+  if (!bannerDotsEl) return;
+  bannerDotsEl.querySelectorAll(".banner-dot").forEach((dot, i) => {
+    dot.classList.toggle("active", i === bannerRealIndex);
   });
 }
 
+function stepBanner(delta) {
+  bannerTrackIndex += delta;
+  bannerRealIndex = ((bannerRealIndex + delta) % bannerSlides.length + bannerSlides.length) % bannerSlides.length;
+  setBannerTrackPosition(true);
+  updateBannerDots();
+}
+
+function onBannerTransitionEnd(e) {
+  if (e.target !== bannerTrackEl || e.propertyName !== "transform") return;
+  const n = bannerSlides.length;
+  // Snap silently from a clone back onto the real slide it mirrors.
+  if (bannerTrackIndex === 0) {
+    bannerTrackIndex = n;
+    setBannerTrackPosition(false);
+  } else if (bannerTrackIndex === n + 1) {
+    bannerTrackIndex = 1;
+    setBannerTrackPosition(false);
+  }
+}
+
 function goToBannerSlide(index) {
-  bannerIndex = (index + bannerSlides.length) % bannerSlides.length;
-  renderBanner();
+  // Kept for backwards compatibility with any external callers.
+  const n = bannerSlides.length;
+  const target = ((index % n) + n) % n;
+  stepBanner(target - bannerRealIndex);
 }
 
 function startBannerAutoplay() {
   clearInterval(bannerTimer);
-  if (bannerSlides.length <= 1) return;
-  bannerTimer = setInterval(() => {
-    goToBannerSlide(bannerIndex + 1);
-  }, BANNER_INTERVAL_MS);
+  if (bannerSlides.length <= 1 || bannerDragging) return;
+  bannerTimer = setInterval(() => stepBanner(1), BANNER_INTERVAL_MS);
+}
+
+function stopBannerAutoplay() {
+  clearInterval(bannerTimer);
+}
+
+function restartBannerAutoplay() {
+  stopBannerAutoplay();
+  startBannerAutoplay();
+}
+
+function onBannerPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  bannerDragging = true;
+  bannerDragStartX = e.clientX;
+  const matrix = new DOMMatrixReadOnly(getComputedStyle(bannerTrackEl).transform);
+  bannerDragStartTx = matrix.m41; // current translateX in px
+  bannerTrackEl.style.transition = "none";
+  bannerTrackEl.setPointerCapture(e.pointerId);
+  stopBannerAutoplay();
+  window.addEventListener("pointermove", onBannerPointerMove);
+  window.addEventListener("pointerup", onBannerPointerUp, { once: true });
+}
+
+function onBannerPointerMove(e) {
+  if (!bannerDragging) return;
+  const dx = e.clientX - bannerDragStartX;
+  bannerTrackEl.style.transform = `translateX(${bannerDragStartTx + dx}px)`;
+}
+
+function onBannerPointerUp(e) {
+  bannerDragging = false;
+  window.removeEventListener("pointermove", onBannerPointerMove);
+  const dx = e.clientX - bannerDragStartX;
+  const threshold = Math.max(50, bannerWidth * 0.12);
+  if (dx <= -threshold) {
+    stepBanner(1);
+  } else if (dx >= threshold) {
+    stepBanner(-1);
+  } else {
+    setBannerTrackPosition(true); // snap back to current slide
+  }
+  restartBannerAutoplay();
 }
 
 // ---------- continue watching ----------

@@ -44,6 +44,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* <-- THIS IS THE NEW LINE THAT FIXES SIDE SCROLLING */
 }
 
 .mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
@@ -961,27 +962,72 @@ body.auth-body {
   border-bottom: 1px solid var(--border-soft);
 }
 
+.banner-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.banner-track:active { cursor: grabbing; }
+
 .banner-slide {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
+  overflow: hidden;
+}
+
+/* Ken Burns: a separate, overflow-clipped layer slowly zooms/drifts
+   behind the copy so the slide never feels static, independent of
+   the track's horizontal slide transform. */
+.banner-slide-bg {
+  position: absolute;
+  inset: -6%;
   background-size: cover;
   background-position: center;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
+  animation: bannerKenBurns 9s ease-in-out infinite alternate;
+  will-change: transform;
 }
-.banner-slide.active { opacity: 1; pointer-events: auto; }
+@keyframes bannerKenBurns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.12) translate(-1.5%, -1%); }
+}
 
 .banner-slide::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
     linear-gradient(to top, var(--bg) 2%, rgba(10,10,16,0.55) 35%, rgba(10,10,16,0.15) 65%),
     linear-gradient(to right, rgba(10,10,16,0.94) 0%, rgba(10,10,16,0.6) 42%, rgba(76,20,60,0.18) 75%);
 }
+
+.banner-dots {
+  position: absolute;
+  z-index: 2;
+  left: 5vw;
+  bottom: 22px;
+  display: flex;
+  gap: 8px;
+}
+.banner-dot {
+  width: 22px;
+  height: 4px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(241,240,245,0.28);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s ease, width 0.25s ease;
+}
+.banner-dot:hover { background: rgba(241,240,245,0.55); }
+.banner-dot.active { background: var(--grad-brand); width: 34px; }
 
 .banner-copy {
   position: relative;
