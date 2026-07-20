@@ -1679,7 +1679,12 @@ body.auth-body {
     width: 100%;
   }
 
-  /* --- FIXED MOBILE CAROUSEL SLIDE ENGINE --- */
+  /* --- MOBILE CAROUSEL SLIDE ENGINE ---
+     The slider is a flex track (.banner-track) that moves via
+     transform: translateX(); slides are always flex:0 0 100% and
+     always visible/opaque — visibility is purely a matter of which
+     one is scrolled into view. Do NOT reintroduce opacity/.active
+     toggling here or every slide gets hidden with nothing to show it. */
   .banner {
     height: 460px; /* Restores concrete constraints so text layouts behave beautifully */
     min-height: 460px;
@@ -1688,22 +1693,8 @@ body.auth-body {
   }
 
   .banner-slide {
-    position: absolute; /* Reverts layout mechanics back to matching standard JavaScript loops */
-    inset: 0;
-    display: flex;
+    /* inherits flex:0 0 100%, position:relative, overflow:hidden from base rule */
     align-items: center;
-    pointer-events: none;
-    opacity: 0 !important; /* Hides the standard layout strings to prevent stacked vertical leaks */
-    background-size: cover;
-    background-position: center;
-  }
-
-  /* Exposes ONLY the single script-activated card array item at any single time */
-  .banner-slide.active {
-    opacity: 1 !important;
-    pointer-events: auto;
-    position: absolute;
-    z-index: 1;
   }
 
   /* Dark high-contrast vignette overlay to maximize string accessibility layers on mobile panels */
@@ -1712,10 +1703,10 @@ body.auth-body {
     content: "";
     position: absolute;
     inset: 0;
+    z-index: 1;
     background: 
       linear-gradient(to top, var(--bg) 12%, rgba(10,10,16,0.6) 45%, rgba(10,10,16,0.3) 100%),
       linear-gradient(to right, rgba(10,10,16,0.92) 0%, rgba(10,10,16,0.4) 100%);
-    z-index: 0;
   }
 
   .banner-copy {
