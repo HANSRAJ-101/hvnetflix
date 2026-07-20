@@ -2,7 +2,7 @@
 // ANIME DATA STORE
 // ------------------------------------------------------------
 // This is the "database" for the simple backend. Edit this file
-// to add your real anime + episodes. No build step needed — f
+// to add your real anime + episodes. No build step needed — f d
 // just commit and push, Vercel redeploys automatically.
 //
 // ------------------ ANIME ENTRY METADATA --------------------
